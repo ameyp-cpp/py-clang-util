@@ -1,0 +1,3 @@
+[submodule "internals/parsehelp"]
+	path = internals/parsehelp
+	url = git://github.com/quarnster/parsehelp.git

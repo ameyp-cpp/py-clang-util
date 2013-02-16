@@ -1,0 +1,9 @@
+*.pyc
+src/build*
+sublimeclang.sublime-workspace
+*.dylib
+*.dll
+*.so
+*.cache
+.coverage
+*,cover
