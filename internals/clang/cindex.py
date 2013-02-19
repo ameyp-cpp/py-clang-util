@@ -63,7 +63,7 @@ call is efficient.
 # o implement additional SourceLocation, SourceRange, and File methods.
 
 from ctypes import *
-from ..common import error_message, bencode, bdecode
+from ..common import error_message
 import platform
 import sys
 
@@ -241,7 +241,7 @@ class Diagnostic(object):
 
     @property
     def spelling(self):
-        return bdecode(_clang_getDiagnosticSpelling(self))
+        return _clang_getDiagnosticSpelling(self)
 
     @property
     def disable_option(self):
@@ -914,7 +914,7 @@ class Cursor(Structure):
 
     @staticmethod
     def get(tu, filename, row, col):
-        obj = _clang_getFile(tu, bencode(filename))
+        obj = _clang_getFile(tu, filename)
         if not obj:
             return None
         f = File(obj)
@@ -1018,7 +1018,7 @@ class Cursor(Structure):
             # this, for consistency with clang_getCursorUSR.
             return None
         if not hasattr(self, '_spelling'):
-            self._spelling = bdecode(Cursor_spelling(self))
+            self._spelling = Cursor_spelling(self)
         return self._spelling
 
     @property
@@ -1031,7 +1031,7 @@ class Cursor(Structure):
         class template specialization.
         """
         if not hasattr(self, '_displayname'):
-            self._displayname = bdecode(Cursor_displayname(self))
+            self._displayname = Cursor_displayname(self)
         return self._displayname
 
     @property
@@ -1803,14 +1803,14 @@ class Index(ClangObject):
         """
         arg_array = 0
         if len(args):
-            args = [bencode(a) for a in args]
+            args = [a for a in args]
             arg_array = (c_char_p * len(args))(*args)
         unsaved_files_array = 0
         if len(unsaved_files):
             unsaved_files_array = (_CXUnsavedFile * len(unsaved_files))()
             for i,(name,value) in enumerate(unsaved_files):
-                value = bencode(makeString(value))
-                unsaved_files_array[i].name = bencode(name)
+                value = makeString(value)
+                unsaved_files_array[i].name = name
                 unsaved_files_array[i].contents = value
                 unsaved_files_array[i].length = len(value)
         ptr = TranslationUnit_parse(self, path, arg_array, len(args),
@@ -1896,8 +1896,8 @@ class TranslationUnit(ClangObject):
         if len(unsaved_files):
             unsaved_files_array = (_CXUnsavedFile * len(unsaved_files))()
             for i,(name,value) in enumerate(unsaved_files):
-                value = bencode(makeString(value))
-                unsaved_files_array[i].name = bencode(name)
+                value = makeString(value)
+                unsaved_files_array[i].name = name
                 unsaved_files_array[i].contents = value
                 unsaved_files_array[i].length = len(value)
         ptr = TranslationUnit_reparse(self, len(unsaved_files),
@@ -1937,7 +1937,7 @@ class File(ClangObject):
     @property
     def name(self):
         """Return the complete file and path name of the file."""
-        return bdecode(_CXString_getCString(File_name(self)))
+        return _CXString_getCString(File_name(self))
 
     @property
     def time(self):

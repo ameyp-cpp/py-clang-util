@@ -27,43 +27,88 @@ import Queue
 import os
 import re
 import sys
+import traceback
 
 from Pymacs import lisp
 import time
 
 class Settings():
     def __init__(self):
-        self._dict = {}
+        self._dict = {
+            "enable": True,
+            "automatic_completion_popup": True,
+            "worker_threadcount": -1,
+            "enable_fast_completions": True,
+            "recompile_delay": 0,
+            "hide_output_when_empty": False,
+            "show_output_panel": False,
+            "update_output_panel": True,
+            "output_panel_use_syntax_file": False, #delta
+            "show_status": True,
+            "show_visual_error_marks": True,
+            "error_marks_on_panel_only": False,
+            "index_parse_options": 13,
+            "warm_up_in_separate_thread": True,
+            "cache_on_load": True,
+            "remove_on_close": True,
+            "pop_on_close": True,
+            "reparse_on_activated": True,
+            "reparse_on_save": True,
+            "reparse_use_dirty_buffer": False,
+            "parse_status_messages": True,
+            "analyzer_status_messages": True,
+            "marker_output_panel_scope": "invalid",
+            "marker_warning_scope": "comment",
+            "marker_error_scope": "invalid",
+            "time_completions": False,
+            "inhibit_sublime_completions": True,
+            "dont_complete_startswith": ["~","operator"],
+            "add_language_option": True,
+            "additional_language_options": {
+                    "c++": [],
+                    "c": [],
+                    "objc": [],
+                    "objc++": []
+                },
+            "options": [
+                "-isystem", "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.7.sdk/usr/include/",
+                "-isystem", "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.7.sdk/usr/include/c++/4.2.1",
+                "-F/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.7.sdk/System/Library/Frameworks/",
+                "-Wno-deprecated-declarations",
+                "-isystem", "C:\\MinGW\\lib\\gcc\\mingw32\\4.7.0\\include",
+                "-isystem", "C:\\MinGW\\lib\\gcc\\mingw32\\4.7.0\\include\\c++",
+                "-isystem", "C:\\MinGW\\lib\\gcc\\mingw32\\4.7.0\\include\\c++\\mingw32",
+                "-isystem", "C:\\MinGW\\include",
+                "-Wall"
+                ],
+            "options_script": "",
+            "dont_prepent_clang_includes": False,
+            "debug_options": True,
+            "marker_analyzer_output_panel_scope": "invalid",
+            "marker_analyzer_scope": "invalid",
+            "analyzer_commandline": [
+                "clang",
+                "--analyze",
+                "-o",
+                "-"
+                ],
+            "analyzer_extensions": [
+                "cpp",
+                "c",
+                "cc",
+                "m",
+                "mm"
+                ],
+            "diagnostic_ignore_dirs": [
+                ],
+            "diagnostic_ignore_regex": "pragma once in main file"
+        }
 
     def get(self, key, default):
         if (self._dict.has_key(key)):
             return self._dict[key]
 
         return default
-
-if sys.version[0] == '2':
-    def sencode(s):
-        return s.encode("utf-8")
-
-    def sdecode(s):
-        return s
-
-    def bencode(s):
-        return s
-    def bdecode(s):
-        return s
-else:
-    def sencode(s):
-        return s
-
-    def sdecode(s):
-        return s
-
-    def bencode(s):
-        return s.encode("utf-8")
-
-    def bdecode(s):
-        return s.decode("utf-8")
 
 class EmacsLog:
     def __init__(self,category):
@@ -72,8 +117,8 @@ class EmacsLog:
         self.startTime=time.time()
 
     def show(self,level,msg):
-        start=int(time.time()-self.startTime)
-        mx=str(start)+" <"+level+"> PY "+self.category+" "+msg
+        start = int(time.time()-self.startTime)
+        mx = str(start) + " <" + level + "> PY " + self.category + " " + msg
         lisp.message(mx)
         #mx = mx + "\n"
         #lisp.set_buffer(self.logBuffer)
@@ -96,7 +141,7 @@ loaded = False
 loaded_callbacks = []
 emacs_logger = EmacsLog("common")
 
-def getBufferAsText(file_name, beg = 0, end = 0):
+def get_buffer_as_text(file_name, beg = 0, end = 0):
     f=open(file_name,"r")
     if end != 0 and beg < end:
         f.seek(beg)
@@ -106,26 +151,29 @@ def getBufferAsText(file_name, beg = 0, end = 0):
     f.close()
     return text
 
-def writeBuffer(file_name, text):
+def write_buffer(file_name, text):
     f=open(file_name,"w")
     f.write(text)
     f.close()
     self.reloadBuffer()
 
-def format_current_file(view):
-    row, col = view.rowcol(view.sel()[0].a)
-    return "%s:%d:%d" % (sencode(view.file_name()), row + 1, col + 1)
+def format_current_file(file_name):
+    row, col = get_row_col(get_line_number(), lisp.point())
+    return "%s:%d:%d" % (file_name, row, col)
 
-def goto_line():
+def goto_line(line_num):
     lisp.goto_char(lisp.point_min())
-    for i in range(1, line_num):
+    for i in range(1, int(line_num)):
         lisp.forward_line(i)
+
+def get_line_number():
+    return int(lisp.what_line()[5:])
 
 def get_line_till_point(line_num, point):
     goto_line(line_num)
     beg = lisp.point()
-    line = getBufferAsText(lisp.buffer_file_name(), beg, current_pos)
-    lisp.goto_char(current_pos)
+    line = get_buffer_as_text(lisp.buffer_file_name(), beg, point)
+    lisp.goto_char(point)
     return line
 
 def get_row_col(line_num, point):
@@ -133,6 +181,15 @@ def get_row_col(line_num, point):
     col = point - lisp.point()
     lisp.goto_char(point)
     return (line_num, col)
+
+def get_prefix(line_num, point):
+    prefix = ""
+    word_regex = re.compile("\w")
+    line = get_line_till_point(line_num, point)
+    if word_regex.match(line[-1]):
+        prefix = line[-1]
+
+    return prefix
 
 def open_file(filename):
     arr = filename.split(":")
@@ -158,6 +215,7 @@ def are_we_there_yet(x):
 
 def run_in_main_thread(func):
     #sublime.set_timeout(func, 0)
+    func()
     return
 
 def error_message(msg):
@@ -165,6 +223,10 @@ def error_message(msg):
     return
 
 def status_message(msg):
+    if msg[:4] == "Line":
+        fil = open("/home/aparulekar/traceback", 'w')
+        traceback.print_stack(file=fil)
+        fil.close()
     emacs_logger.info(msg)
 
 def get_language():

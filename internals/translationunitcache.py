@@ -24,9 +24,12 @@ freely, subject to the following restrictions:
 import os
 import sys
 
-from common import Worker, complete_path, expand_path, get_setting, get_path_setting,\
-                    get_language, LockedVariable, run_in_main_thread, error_message,\
-                    display_user_selection, get_cpu_count, status_message, bencode, bdecode, are_we_there_yet
+from Pymacs import lisp
+
+from common import Worker, complete_path, expand_path, get_setting, get_path_setting, \
+        get_language, LockedVariable, run_in_main_thread, error_message,\
+        display_user_selection, get_cpu_count, status_message, are_we_there_yet,\
+        status_message
 
 from .clang import cindex
 from .parsehelp.parsehelp import *
@@ -68,7 +71,7 @@ def get_cache_library():
             except:
                 import traceback
                 traceback.print_exc()
-                error_message(""" It looks like libcache.so couldn't be loaded. On Linux you have to compile it yourself.
+                print(""" It looks like libcache.so couldn't be loaded. On Linux you have to compile it yourself.
 
 See http://github.com/quarnster/SublimeClang for more details.
 """)
@@ -77,11 +80,11 @@ class CacheEntry(Structure):
     _fields_ = [("cursor", cindex.Cursor), ("raw_insert", c_char_p), ("raw_display", c_char_p), ("access", c_uint), ("static", c_bool), ("baseclass", c_bool)]
     @property
     def insert(self):
-        return bdecode(self.raw_insert)
+        return self.raw_insert
 
     @property
     def display(self):
-        return bdecode(self.raw_display)
+        return self.raw_display
 
 class _Cache(Structure):
     def __del__(self):
@@ -162,7 +165,7 @@ class Cache:
     def get_native_namespace(self, namespace):
         nsarg = (c_char_p*len(namespace))()
         for i in range(len(namespace)):
-            nsarg[i] = bencode(namespace[i])
+            nsarg[i] = namespace[i]
         return nsarg
 
     def complete_namespace(self, namespace):
@@ -204,7 +207,7 @@ class Cache:
             if ns:
                 nsarg = self.get_native_namespace(ns.split("::"))
                 nslen = len(nsarg)
-            cursor = cache_findType(self.cache, nsarg, nslen, bencode(typename))
+            cursor = cache_findType(self.cache, nsarg, nslen, typename)
             if cursor != None and not cursor.kind.is_invalid():
                 if cursor.kind.is_reference():
                     cursor = cursor.get_referenced()
@@ -314,7 +317,7 @@ class Cache:
             match = re.search(r"([^\(\s,]+::)+$", before)
             if match == None:
                 ret = None
-                cached_results = cache_complete_startswith(self.cache, bencode(prefix))
+                cached_results = cache_complete_startswith(self.cache, prefix)
                 if cached_results:
                     ret = []
                     for x in cached_results[0]:
@@ -452,7 +455,7 @@ class Cache:
                     if typename.endswith("()"):
                         func = True
                         typename = typename[:-2]
-                    cached_results = cache_complete_startswith(self.cache, bencode(typename))
+                    cached_results = cache_complete_startswith(self.cache, typename)
                     if cached_results:
                         for x in cached_results[0]:
                             if x.cursor.spelling == typename:
@@ -609,7 +612,7 @@ class Cache:
             return remove_duplicates(ret)
         else:
             constr = re.search(r"(^|\W)new\s+$", before) != None
-            cached_results = cache_complete_startswith(self.cache, bencode(prefix))
+            cached_results = cache_complete_startswith(self.cache, prefix)
             if cached_results:
                 ret = [(x.display, x.insert) for x in cached_results[0]]
             variables = extract_variables(data) if not constr else []
@@ -652,11 +655,10 @@ class Cache:
             for i, (name, value) in enumerate(unsaved_files):
                 if not isinstance(value, str):
                     value = value.encode("ascii", "ignore")
-                value = bencode(value)
-                unsaved[i].name = bencode(name)
+                unsaved[i].name = name
                 unsaved[i].contents = value
                 unsaved[i].length = len(value)
-        comp = cache_clangComplete(self.cache, bencode(filename), row, col, unsaved, len(unsaved_files), membercomp)
+        comp = cache_clangComplete(self.cache, filename, row, col, unsaved, len(unsaved_files), membercomp)
 
         if comp:
             ret = [(c.display, c.insert) for c in comp[0]]
@@ -1043,6 +1045,7 @@ class TranslationUnitCache(Worker):
             return
         try:
             self.set_status("Parsing %s" % filename)
+            status_message("Parsing %s" % filename)
             self.get_translation_unit(filename, opts)
             self.set_status("Parsing %s done" % filename)
         finally:
