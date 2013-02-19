@@ -24,12 +24,12 @@ freely, subject to the following restrictions:
 import os
 import sys
 
-from Pymacs import lisp
+debug = True
 
 from common import Worker, complete_path, expand_path, get_setting, get_path_setting, \
         get_language, LockedVariable, run_in_main_thread, error_message,\
         display_user_selection, get_cpu_count, status_message, are_we_there_yet,\
-        status_message
+        status_message, get_file_name
 
 from .clang import cindex
 from .parsehelp.parsehelp import *
@@ -1160,7 +1160,7 @@ class TranslationUnitCache(Worker):
         return ret
 
     def check_opts(self):
-        key = lisp.buffer_file_name()
+        key = get_file_name()
         opts = get_setting("options", [])
         cache = self.__options_cache.lock()
         if opts != cache[key][0]:
@@ -1168,7 +1168,7 @@ class TranslationUnitCache(Worker):
         self.__options_cache.unlock()
 
     def get_opts(self):
-        key = lisp.buffer_file_name()
+        key = get_file_name()
         cache = self.__options_cache.lock()
         try:
             if key in cache:
@@ -1217,6 +1217,8 @@ class TranslationUnitCache(Worker):
                 opts2.extend(complete_path(option))
             opts = opts2
 
+            if debug:
+                opts = ['-I/home/amey/.emacs.d/pymacs-plugins/SublimeClang/internals/clang/include', '-x', 'c++']
             if self.debug_options:
                 print("Will compile file %s with the following options:\n%s" % (filename, opts))
 

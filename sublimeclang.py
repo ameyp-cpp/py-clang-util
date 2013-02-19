@@ -26,7 +26,7 @@ import sys
 
 import Queue
 from internals.clang import cindex
-from Pymacs import lisp
+
 #from errormarkers import clear_error_marks, add_error_mark, show_error_marks, \
 #                         erase_error_marks
 from internals.common import get_setting, get_settings, is_supported_language, \
@@ -34,7 +34,7 @@ from internals.common import get_setting, get_settings, is_supported_language, \
                                 status_message, are_we_there_yet, plugin_loaded, \
                                 format_current_file, goto_line, get_line_till_point, \
                                 get_row_col, open_file, get_prefix, get_buffer_as_text, \
-                                get_line_number
+                                get_line_number, get_file_name, get_current_position, is_dirty
 from internals import translationunitcache
 from internals.parsehelp import parsehelp
 plugin_loaded()
@@ -49,12 +49,12 @@ clang_complete_enabled = True
 clang_fast_completions = True
 
 def open(target):
-    navigation_stack.append((format_current_file(lisp.buffer_file_name()), target))
+    navigation_stack.append((format_current_file(get_file_name()), target))
     open_file(target)
 
 def warm_up_cache(filename=None):
     if filename == None:
-        filename = lisp.buffer_file_name()
+        filename = get_file_name()
     stat = translationunitcache.tuCache.get_status(filename)
     if stat == translationunitcache.TranslationUnitCache.STATUS_NOT_IN_CACHE:
         translationunitcache.tuCache.add(filename)
@@ -62,7 +62,7 @@ def warm_up_cache(filename=None):
 
 def get_translation_unit(filename=None, blocking=False):
     if filename == None:
-        filename = lisp.buffer_file_name()
+        filename = get_file_name()
 
     if get_setting("warm_up_in_separate_thread", True) and not blocking:
         stat = warm_up_cache(filename)
@@ -75,7 +75,7 @@ def get_translation_unit(filename=None, blocking=False):
     return translationunitcache.tuCache.get_translation_unit(filename, translationunitcache.tuCache.get_opts())
 
 def ClangWarmupCache():
-    stat = warm_up_cache(lisp.buffer_file_name())
+    stat = warm_up_cache(get_file_name())
     if stat == translationunitcache.TranslationUnitCache.STATUS_PARSING:
         status_message("Cache is already warming up")
     elif stat != translationunitcache.TranslationUnitCache.STATUS_NOT_IN_CACHE:
@@ -86,7 +86,7 @@ def ClangGoBackEventListener():
         return
     # If the view we just closed was last in the navigation_stack,
     # consider it "popped" from the stack
-    fn = lisp.buffer_file_name()
+    fn = get_file_name()
     if fn == None:
         return
 
@@ -137,8 +137,8 @@ class ClangGotoBase():
         if tu == None:
             return
 
-        offset = lisp.point()
-        data = get_buffer_as_text(lisp.buffer_file_name())
+        offset = get_current_position()
+        data = get_buffer_as_text(get_file_name())
         self.get_target(tu, data, offset, self.found_callback, self.get_folders_in_project())
 
     def is_enabled(self):
@@ -163,9 +163,9 @@ def ClangClearCache():
 
 def ClangReparse():
     unsaved_files = []
-    if lisp.buffer_modified_p():
-        unsaved_files.append((lisp.buffer_file_name(), get_buffer_as_text()))
-    translationunitcache.tuCache.reparse(lisp.buffer_file_name(), unsaved_files)
+    if is_dirty():
+        unsaved_files.append((get_file_name(), get_buffer_as_text()))
+    translationunitcache.tuCache.reparse(get_file_name(), unsaved_files)
 
 def ignore_diagnostic(path, ignoreDirs):
     normalized_path = os.path.abspath(os.path.normpath(os.path.normcase(path)))
@@ -268,7 +268,7 @@ def display_compilation_results():
 member_regex = re.compile(r"(([a-zA-Z_]+[0-9_]*)|([\)\]])+)((\.)|(->))$")
 
 def is_member_completion(caret):
-    current_pos = lisp.point()
+    current_pos = get_current_position()
     line_num = get_line_number()
     line = get_line_till_point(line_num, current_pos)
 
@@ -305,7 +305,8 @@ class ClangComplete():
         self.view.run_command("auto_complete")
 """
 
-class SublimeClangAutoComplete():
+#class SublimeClangAutoComplete():
+class scaa():
     def __init__(self):
         s = get_settings()
         are_we_there_yet(lambda: self.load_settings())
@@ -336,7 +337,7 @@ class SublimeClangAutoComplete():
         if not is_supported_language() or not clang_complete_enabled:
             return []
 
-        current_pos = lisp.point()
+        current_pos = get_current_position()
         line_num = get_line_number()
         prefix = get_prefix(line_num, current_pos)
 
@@ -367,7 +368,7 @@ class SublimeClangAutoComplete():
 
             cached_results = None
             if clang_fast_completions and get_setting("enable_fast_completions", True):
-                data = get_buffer_as_text(lisp.buffer_file_name(), 0, lisp.point())
+                data = get_buffer_as_text(get_file_name(), 0, get_current_position())
                 try:
                     cached_results = tu.cache.complete(data, prefix)
                 except:
@@ -378,16 +379,14 @@ class SublimeClangAutoComplete():
                 ret = cached_results
             else:
                 status_message("doing slow completions")
-                (row, col) = get_row_col(get_line_number(), lisp.point() - len(prefix))
-                # row, col = view.rowcol(lisp.point() - len(prefix))
+                (row, col) = get_row_col(get_line_number(), get_current_position() - len(prefix))
                 unsaved_files = []
-                if lisp.buffer_modified_p():
-                    unsaved_files.append(lisp.buffer_file_name(),
-                                      get_buffer_as_text(lisp.buffer_file_name()))
-                ret = tu.cache.clangcomplete(lisp.buffer_file_name(),
+                if is_dirty():
+                    unsaved_files.append(get_file_name(),
+                                         get_buffer_as_text(get_file_name()))
+                ret = tu.cache.clangcomplete(get_file_name(),
                                              row, col, unsaved_files,
-                                             is_member_completion(lisp.point() - len(prefix)))
-                                             #is_member_completion(lisp.point() - len(prefix)))
+                                             is_member_completion(get_current_position() - len(prefix)))
             if self.time_completions:
                 curr = (time.time() - start)*1000
                 tot += curr
@@ -435,10 +434,10 @@ class SublimeClangAutoComplete():
 
     def recompile(self):
         unsaved_files = []
-        if lisp.buffer_modified_p() and get_setting("reparse_use_dirty_buffer", False):
-            unsaved_files.append((lisp.buffer_file_name(),
-                                  get_buffer_as_text(lisp.buffer_file_name())))
-        if not translationunitcache.tuCache.reparse(lisp.buffer_file_name(),
+        if is_dirty() and get_setting("reparse_use_dirty_buffer", False):
+            unsaved_files.append((get_file_name(),
+                                  get_buffer_as_text(get_file_name())))
+        if not translationunitcache.tuCache.reparse(get_file_name(),
                                                     unsaved_files, self.reparse_done):
             # Already parsing so retry in a bit
             self.restart_recompile_timer(1)
@@ -464,4 +463,4 @@ class SublimeClangAutoComplete():
 
     def on_close(self):
         if self.remove_on_close and is_supported_language():
-            translationunitcache.tuCache.remove(lisp.buffer_file_name())
+            translationunitcache.tuCache.remove(get_file_name())

@@ -1,7 +1,7 @@
 from Pymacs import lisp
 from collections import defaultdict
 from internals.common import get_setting, sdecode, status_message, error_message, \
-     get_row_col, open_file, get_line_number
+     get_row_col, open_file, get_line_number, get_file_name, get_current_position()
 
 ERRORS = {}
 WARNINGS = {}
@@ -11,8 +11,8 @@ WARNING = "warning"
 clang_view = None
 
 def ClangNext():
-    fn = lisp.buffer_file_name()
-    line, column = get_row_col(get_line_number(), lisp.point())
+    fn = get_file_name()
+    line, column = get_row_col(get_line_number(), get_current_position())
     gotoline = -1
     if fn in ERRORS:
         for errLine in ERRORS[fn]:
@@ -31,8 +31,8 @@ def ClangNext():
         status_message("No more errors or warnings!")
 
 def ClangPrevious():
-    fn = lisp.buffer_file_name().encode()
-    line, column = get_row_col(get_line_number(), lisp.point())
+    fn = get_file_name().encode()
+    line, column = get_row_col(get_line_number(), get_current_position())
     gotoline = -1
     if fn in ERRORS:
         for errLine in ERRORS[fn]:

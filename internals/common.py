@@ -29,7 +29,47 @@ import re
 import sys
 import traceback
 
-from Pymacs import lisp
+debug = True
+
+if debug == False:
+    from Pymacs import lisp
+else:
+    class Lisp():
+        def __init__(self):
+            self.line = 40
+            self.pos = 311
+            self.fn = "/home/amey/tmp/test.cpp"
+
+        def message(self, msg):
+            print msg
+
+        def goto_char(self, point):
+            self.pos = point
+
+        def forward_line(self, count):
+            self.line += count
+
+        def what_line(self):
+            return "Line " + str(self.line)
+
+        def point(self):
+            return self.pos
+
+        def point_min(self):
+            return 1
+
+        def buffer_file_name(self):
+            return self.fn
+
+        def find_file(self, filename):
+            # nothing to do
+            return
+
+        def is_dirty(self):
+            return False;
+
+    lisp = Lisp()
+
 import time
 
 class Settings():
@@ -37,7 +77,7 @@ class Settings():
         self._dict = {
             "enable": True,
             "automatic_completion_popup": True,
-            "worker_threadcount": -1,
+            "worker_threadcount": 1,
             "enable_fast_completions": True,
             "recompile_delay": 0,
             "hide_output_when_empty": False,
@@ -48,7 +88,7 @@ class Settings():
             "show_visual_error_marks": True,
             "error_marks_on_panel_only": False,
             "index_parse_options": 13,
-            "warm_up_in_separate_thread": True,
+            "warm_up_in_separate_thread": False,
             "cache_on_load": True,
             "remove_on_close": True,
             "pop_on_close": True,
@@ -141,8 +181,17 @@ loaded = False
 loaded_callbacks = []
 emacs_logger = EmacsLog("common")
 
+def get_file_name():
+    return lisp.buffer_file_name()
+
+def get_current_position():
+    return lisp.point()
+
+def is_dirty():
+    return lisp.buffer_modified_p()
+
 def get_buffer_as_text(file_name, beg = 0, end = 0):
-    f=open(file_name,"r")
+    f = open(file_name,"r")
     if end != 0 and beg < end:
         f.seek(beg)
         text = f.read(end - beg)
@@ -163,8 +212,7 @@ def format_current_file(file_name):
 
 def goto_line(line_num):
     lisp.goto_char(lisp.point_min())
-    for i in range(1, int(line_num)):
-        lisp.forward_line(i)
+    lisp.forward_line(line_num - 1)
 
 def get_line_number():
     return int(lisp.what_line()[5:])
