@@ -24,7 +24,7 @@ freely, subject to the following restrictions:
 import os
 import sys
 
-from .common import Worker, complete_path, expand_path, get_setting, get_path_setting,\
+from common import Worker, complete_path, expand_path, get_setting, get_path_setting,\
                     get_language, LockedVariable, run_in_main_thread, error_message,\
                     display_user_selection, get_cpu_count, status_message, bencode, bdecode, are_we_there_yet
 
@@ -105,22 +105,6 @@ class CacheCompletionResults(Structure):
 
 
 cachelib = get_cache_library()
-try:
-    import json
-    _getVersion = cachelib.getVersion
-    _getVersion.restype = c_char_p
-    f = open("%s/../package.json" % scriptpath)
-    data = json.load(f)
-    f.close()
-    json = data["packages"][0]["platforms"]["*"][0]["version"]
-    lib = _getVersion().decode(sys.getdefaultencoding())
-    print("Have SublimeClang package: %s" % json)
-    print("Have SublimeClang libcache: %s" % lib)
-    assert lib == json
-except:
-    import traceback
-    traceback.print_exc()
-    error_message("Your SublimeClang libcache is out of date. Try restarting ST2 and if that fails, uninstall SublimeClang, restart ST2 and install it again.")
 
 _createCache = cachelib.createCache
 _createCache.restype = POINTER(_Cache)

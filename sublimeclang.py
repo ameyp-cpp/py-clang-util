@@ -24,27 +24,18 @@ import ctypes
 import os
 import sys
 
-try:
-    import Queue
-    from internals.clang import cindex
-    from errormarkers import clear_error_marks, add_error_mark, show_error_marks, \
-                             update_statusbar, erase_error_marks, clang_error_panel
-    from internals.common import get_setting, get_settings, is_supported_language, \
-                                    get_language,get_cpu_count, run_in_main_thread, \
-                                    status_message, sencode, are_we_there_yet, plugin_loaded
-    from internals import translationunitcache
-    from internals.parsehelp import parsehelp
-    plugin_loaded()
-except:
-    import queue as Queue
-    from .internals.clang import cindex
-    from .errormarkers import clear_error_marks, add_error_mark, show_error_marks, \
-                             update_statusbar, erase_error_marks, clang_error_panel
-    from .internals.common import get_setting, get_settings, is_supported_language, \
-                                    get_language,get_cpu_count, run_in_main_thread, \
-                                    status_message, sencode, are_we_there_yet, plugin_loaded
-    from .internals import translationunitcache
-    from .internals.parsehelp import parsehelp
+import Queue
+from internals.clang import cindex
+#from errormarkers import clear_error_marks, add_error_mark, show_error_marks, \
+#                         erase_error_marks
+from internals.common import get_setting, get_settings, is_supported_language, \
+                                get_language,get_cpu_count, run_in_main_thread, \
+                                status_message, sencode, are_we_there_yet, plugin_loaded, \
+                                format_current_file, goto_line, get_line_till_point, \
+                                get_row_col, open_file
+from internals import translationunitcache
+from internals.parsehelp import parsehelp
+plugin_loaded()
 
 import re
 import threading
@@ -54,19 +45,6 @@ import traceback
 navigation_stack = []
 clang_complete_enabled = True
 clang_fast_completions = True
-
-def format_current_file(view):
-    row, col = view.rowcol(view.sel()[0].a)
-    return "%s:%d:%d" % (sencode(view.file_name()), row + 1, col + 1)
-
-def open_file(filename):
-    arr = filename.split(":")
-    file_name, line_num, col_num = arr[0], int(arr[1]), int(arr[2])
-    lisp.find_file(filename)
-    lisp.goto_char(lisp.point_min())
-    for i in range(1, line_num):
-        lisp.forward_line(i)
-    lisp.goto_char(lisp.point() + col_num)
 
 def open(target):
     navigation_stack.append((format_current_file(lisp.buffer_file_name()), target))
@@ -148,6 +126,10 @@ class ClangGotoBase():
                 target = target[1]
             open(target)
 
+    def get_folders_in_project(self):
+        # Temporary workaround
+        return ["/home/amey/Developer/GamePlay"]
+
     def run(self):
         tu = get_translation_unit()
         if tu == None:
@@ -155,7 +137,7 @@ class ClangGotoBase():
 
         offset = lisp.point()
         data = getBufferAsText(lisp.buffer_file_name())
-        self.get_target(tu, data, offset, self.found_callback, self.view.window().folders())
+        self.get_target(tu, data, offset, self.found_callback, self.get_folders_in_project())
 
     def is_enabled(self):
         return is_supported_language(sublime.active_window().active_view())
@@ -173,19 +155,15 @@ class ClangGotoDef(ClangGotoBase):
         self.goto_type = "definition"
         return tu.get_definition(data, offset, found_callback, folders)
 
-class ClangClearCache(sublime_plugin.TextCommand):
-    def run(self, edit):
-        translationunitcache.tuCache.clear()
-        sublime.status_message("Cache cleared!")
+def ClangClearCache():
+    translationunitcache.tuCache.clear()
+    sublime.status_message("Cache cleared!")
 
-class ClangReparse(sublime_plugin.TextCommand):
-    def run(self, edit):
-        view = self.view
-        unsaved_files = []
-        if view.is_dirty():
-            unsaved_files.append((sencode(view.file_name()),
-                          view.substr(Region(0, view.size()))))
-        translationunitcache.tuCache.reparse(view, sencode(view.file_name()), unsaved_files)
+def ClangReparse():
+    unsaved_files = []
+    if lisp.buffer_modified_p():
+        unsaved_files.append((sencode(lisp.buffer_file_name()), getBufferAsText()))
+    translationunitcache.tuCache.reparse(sencode(lisp.buffer_file_name()), unsaved_files)
 
 def ignore_diagnostic(path, ignoreDirs):
     normalized_path = os.path.abspath(os.path.normpath(os.path.normcase(path)))
@@ -194,12 +172,12 @@ def ignore_diagnostic(path, ignoreDirs):
             return True
     return False
 
-def display_compilation_results(view):
-    tu = get_translation_unit(view)
+def display_compilation_results():
+    tu = get_translation_unit()
     errString = ""
     show = False
     clear_error_marks()  # clear visual error marks
-    erase_error_marks(view)
+    erase_error_marks()
     if tu == None:
         return
 
@@ -208,7 +186,7 @@ def display_compilation_results(view):
     try:
         errorCount = 0
         warningCount = 0
-        ignoreDirs = [os.path.abspath(os.path.normpath(os.path.normcase(d))) for d in get_setting("diagnostic_ignore_dirs", [], view)]
+        ignoreDirs = [os.path.abspath(os.path.normpath(os.path.normcase(d))) for d in get_setting("diagnostic_ignore_dirs", [])]
         ignore_regex_str = get_setting("diagnostic_ignore_regex", "pragma once in main file")
         if ignore_regex_str:
             ignore_regex = re.compile(ignore_regex_str)
@@ -238,11 +216,13 @@ def display_compilation_results(view):
                         err = "%s [Disable with %s]" % (err, diag.disable_option)
                 except AttributeError:
                     pass
+
                 if diag.severity == cindex.Diagnostic.Fatal and \
                         "not found" in diag.spelling:
                     err = "%s\nDid you configure the include path used by clang properly?\n" \
                           "See http://github.com/quarnster/SublimeClang for more details on "\
                           "how to configure SublimeClang." % (err)
+
                 errString = "%s%s\n" % (errString, err)
                 if diag.severity == cindex.Diagnostic.Warning:
                     warningCount += 1
@@ -256,43 +236,48 @@ def display_compilation_results(view):
                 """
                 add_error_mark(
                     diag.severityName, filename, f.line - 1, diag.spelling)
-            show = errString and get_setting("show_output_panel", True, view)
+            show = errString and get_setting("show_output_panel", True)
     finally:
         tu.unlock()
-    if (errorCount > 0 or warningCount > 0) and get_setting("show_status", True, view):
+
+    if (errorCount > 0 or warningCount > 0) and get_setting("show_status", True):
         statusString = "Clang Status: "
         if errorCount > 0:
             statusString = "%s%d Error%s" % (statusString, errorCount, "s" if errorCount != 1 else "")
         if warningCount > 0:
             statusString = "%s%s%d Warning%s" % (statusString, ", " if errorCount > 0 else "",
                                                  warningCount, "s" if warningCount != 1 else "")
-        view.set_status("SublimeClang", statusString)
-    else:
-        view.erase_status("SublimeClang")
-    window = view.window()
-    clang_error_panel.set_data(errString)
-    update_statusbar(view)
-    if not get_setting("error_marks_on_panel_only", False, view):
-        show_error_marks(view)
+        status_message("SublimeClang", statusString)
+
+    error_message(errString)
+
+    if not get_setting("error_marks_on_panel_only", False):
+        show_error_marks()
+
+    """
     if not window is None:
         if show:
             window.run_command("clang_toggle_panel", {"show": True})
         elif get_setting("hide_output_when_empty", False, view):
             if clang_error_panel.is_visible():
                 window.run_command("clang_toggle_panel", {"show": False})
+    """
 
 member_regex = re.compile(r"(([a-zA-Z_]+[0-9_]*)|([\)\]])+)((\.)|(->))$")
 
+def is_member_completion(caret):
+    current_pos = lisp.point()
+    line_num = lisp.what_line()
+    line = get_line_till_point(line_num, current_pos)
 
-def is_member_completion(view, caret):
-    line = view.substr(Region(view.line(caret).a, caret))
     if member_regex.search(line) != None:
         return True
     elif get_language(view).startswith("objc"):
         return re.search(r"\[[\.\->\s\w\]]+\s+$", line) != None
     return False
 
-class ClangComplete(sublime_plugin.TextCommand):
+"""
+class ClangComplete():
     def run(self, edit, characters):
         regions = [a for a in self.view.sel()]
         self.view.sel().clear()
@@ -309,18 +294,18 @@ class ClangComplete(sublime_plugin.TextCommand):
             self.view.sel().add(sublime.Region(pos, pos))
         caret = self.view.sel()[0].begin()
         line = self.view.substr(sublime.Region(self.view.word(caret-1).a, caret))
-        if is_member_completion(self.view, caret) or line.endswith("::") or re.search("(^|\W)new\s+\w*$", line):
+
+        if is_member_completion(caret) or line.endswith("::") or re.search("(^|\W)new\s+\w*$", line):
             self.view.run_command("hide_auto_complete")
             sublime.set_timeout(self.delayed_complete, 1)
 
     def delayed_complete(self):
         self.view.run_command("auto_complete")
+"""
 
-class SublimeClangAutoComplete(sublime_plugin.EventListener):
+class SublimeClangAutoComplete():
     def __init__(self):
         s = get_settings()
-        s.clear_on_change("options")
-        s.add_on_change("options", self.load_settings)
         are_we_there_yet(lambda: self.load_settings())
         self.recompile_timer = None
         self.not_code_regex = re.compile("(string.)|(comment.)")
@@ -344,18 +329,14 @@ class SublimeClangAutoComplete(sublime_plugin.EventListener):
                 kind == cindex.CursorKind.FUNCTION_TEMPLATE or \
                 kind == cindex.CursorKind.NOT_IMPLEMENTED
 
-    def return_completions(self, comp, view):
-        if get_setting("inhibit_sublime_completions", True, view):
-            return (comp, sublime.INHIBIT_WORD_COMPLETIONS | sublime.INHIBIT_EXPLICIT_COMPLETIONS)
-        return comp
-
-    def on_query_completions(self, view, prefix, locations):
+    def on_query_completions(self, prefix):
         global clang_complete_enabled
-        if not is_supported_language(view) or not clang_complete_enabled or \
-                not view.match_selector(locations[0], '-string -comment -constant'):
+        if not is_supported_language() or not clang_complete_enabled:
             return []
 
-        line = view.substr(sublime.Region(view.line(locations[0]).begin(), locations[0]))
+        current_pos = lisp.point()
+        line_num = lisp.what_line()
+        line = get_line_till_point(line_num, current_pos)
         match = re.search(r"[,\s]*(\w+)\s+\w+$", line)
         if match != None:
             valid = ["new", "delete", "return", "goto", "case", "const", "static", "class", "struct", "typedef", "union"]
@@ -363,14 +344,14 @@ class SublimeClangAutoComplete(sublime_plugin.EventListener):
                 # Probably a variable or function declaration
                 # There's no point in trying to complete
                 # a name that hasn't been typed yet...
-                return self.return_completions([], view)
+                return []
 
         timing = ""
         tot = 0
         start = time.time()
         tu = get_translation_unit(view)
         if tu == None:
-            return self.return_completions([], view)
+            return []
         ret = None
         tu.lock()
         try:
@@ -381,23 +362,28 @@ class SublimeClangAutoComplete(sublime_plugin.EventListener):
                 start = time.time()
 
             cached_results = None
-            if clang_fast_completions and get_setting("enable_fast_completions", True, view):
-                data = view.substr(sublime.Region(0, locations[0]))
+            if clang_fast_completions and get_setting("enable_fast_completions", True):
+                data = getBufferAsText(lisp.buffer_file_name, 0, lisp.point())
                 try:
                     cached_results = tu.cache.complete(data, prefix)
                 except:
                     traceback.print_exc()
+
             if cached_results != None:
                 print("found fast completions")
                 ret = cached_results
             else:
                 print("doing slow completions")
-                row, col = view.rowcol(locations[0] - len(prefix))
+                (row, col) = get_row_col(lisp.what_line(), lisp.point() - len(prefix))
+                # row, col = view.rowcol(lisp.point() - len(prefix))
                 unsaved_files = []
-                if view.is_dirty():
-                    unsaved_files.append((sencode(view.file_name()),
-                                      view.substr(Region(0, view.size()))))
-                ret = tu.cache.clangcomplete(sencode(view.file_name()), row+1, col+1, unsaved_files, is_member_completion(view, locations[0] - len(prefix)))
+                if lisp.buffer_modified_p():
+                    unsaved_files.append(sencode(lisp.buffer_file_name()),
+                                      getBufferAsText(lisp.buffer_file_name()))
+                ret = tu.cache.clangcomplete(sencode(lisp.buffer_file_name()),
+                                             row, col, unsaved_files,
+                                             is_member_completion(lisp.point() - len(prefix)))
+                                             #is_member_completion(lisp.point() - len(prefix)))
             if self.time_completions:
                 curr = (time.time() - start)*1000
                 tot += curr
@@ -425,13 +411,13 @@ class SublimeClangAutoComplete(sublime_plugin.EventListener):
                 timing += ", Filter: %f" % (curr)
                 timing += ", Tot: %f ms" % (tot)
                 print(timing)
-                sublime.status_message(timing)
+                status_message(timing)
         finally:
             tu.unlock()
 
         if not ret is None:
-            return self.return_completions(ret, view)
-        return self.return_completions([], view)
+            return ret
+        return []
 
     def reparse_done(self):
         display_compilation_results(self.view)
@@ -444,14 +430,12 @@ class SublimeClangAutoComplete(sublime_plugin.EventListener):
         self.recompile_timer.start()
 
     def recompile(self):
-        view = self.view
         unsaved_files = []
-        if view.is_dirty() and get_setting("reparse_use_dirty_buffer", False, view):
-            unsaved_files.append((sencode(view.file_name()),
-                                  view.substr(Region(0, view.size()))))
-        if not translationunitcache.tuCache.reparse(view, sencode(view.file_name()), unsaved_files,
-                        self.reparse_done):
-
+        if lisp.buffer_modified_p() and get_setting("reparse_use_dirty_buffer", False):
+            unsaved_files.append((sencode(lisp.buffer_file_name()),
+                                  getBufferAsText(lisp.buffer_file_name())))
+        if not translationunitcache.tuCache.reparse(sencode(lisp.buffer_file_name()),
+                                                    unsaved_files, self.reparse_done):
             # Already parsing so retry in a bit
             self.restart_recompile_timer(1)
 

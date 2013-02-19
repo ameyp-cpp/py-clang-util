@@ -1,11 +1,7 @@
-import sublime
-import sublime_plugin
+from Pymacs import lisp
 from collections import defaultdict
-try:
-    from .internals.common import get_setting, sdecode
-except:
-    from internals.common import get_setting, sdecode
-
+from internals.common import get_setting, sdecode, status_message, error_message, \
+     get_row_col, open_file
 
 ERRORS = {}
 WARNINGS = {}
@@ -14,56 +10,44 @@ ERROR = "error"
 WARNING = "warning"
 clang_view = None
 
+def ClangNext():
+    fn = lisp.buffer_file_name().encode("utf-8")
+    line, column = get_row_col(lisp.what_line(), lisp.point())
+    gotoline = -1
+    if fn in ERRORS:
+        for errLine in ERRORS[fn]:
+            if errLine > line:
+                gotoline = errLine
+                break
+    if fn in WARNINGS:
+        for warnLine in WARNINGS[fn]:
+            if warnLine > line:
+                if gotoline == -1 or warnLine < gotoline:
+                    gotoline = warnLine
+                break
+    if gotoline != -1:
+        open_file("%s:%d" % (fn, gotoline + 1))
+    else:
+        status_message("No more errors or warnings!")
 
-class ClangNext(sublime_plugin.TextCommand):
-    def run(self, edit):
-        v = self.view
-        fn = v.file_name().encode("utf-8")
-        line, column = v.rowcol(v.sel()[0].a)
-        gotoline = -1
-        if fn in ERRORS:
-            for errLine in ERRORS[fn]:
-                if errLine > line:
-                    gotoline = errLine
-                    break
-        if fn in WARNINGS:
-            for warnLine in WARNINGS[fn]:
-                if warnLine > line:
-                    if gotoline == -1 or warnLine < gotoline:
-                        gotoline = warnLine
-                    break
-        if gotoline != -1:
-            v.window().open_file("%s:%d" % (fn, gotoline + 1), sublime.ENCODED_POSITION)
-        else:
-            sublime.status_message("No more errors or warnings!")
-
-
-class ClangPrevious(sublime_plugin.TextCommand):
-    def run(self, edit):
-        v = self.view
-        fn = v.file_name().encode("utf-8")
-        line, column = v.rowcol(v.sel()[0].a)
-        gotoline = -1
-        if fn in ERRORS:
-            for errLine in ERRORS[fn]:
-                if errLine < line:
-                    gotoline = errLine
-        if fn in WARNINGS:
-            for warnLine in WARNINGS[fn]:
-                if warnLine < line:
-                    if gotoline == -1 or warnLine > gotoline:
-                        gotoline = warnLine
-        if gotoline != -1:
-            v.window().open_file("%s:%d" % (fn, gotoline + 1), sublime.ENCODED_POSITION)
-        else:
-            sublime.status_message("No more errors or warnings!")
-
-
-class ClangErrorPanelFlush(sublime_plugin.TextCommand):
-    def run(self, edit, data):
-        self.view.erase(edit, sublime.Region(0, self.view.size()))
-        self.view.insert(edit, 0, data)
-
+def ClangPrevious():
+    fn = lisp.buffer_file_name().encode("utf-8")
+    line, column = get_row_col(lisp.what_line(), lisp.point())
+    gotoline = -1
+    if fn in ERRORS:
+        for errLine in ERRORS[fn]:
+            if errLine < line:
+                gotoline = errLine
+    if fn in WARNINGS:
+        for warnLine in WARNINGS[fn]:
+            if warnLine < line:
+                if gotoline == -1 or warnLine > gotoline:
+                    gotoline = warnLine
+    if gotoline != -1:
+        open_file("%s:%d" % (fn, gotoline + 1))
+    else:
+        sublime.status_message("No more errors or warnings!")
+"""
 class ClangErrorPanel(object):
     def __init__(self):
         self.view = None
@@ -122,10 +106,6 @@ class ClangErrorPanel(object):
         else:
             regions = [self.view.full_line(r)]
             self.view.add_regions('highlightText', regions, panel_marker, 'dot', sublime.DRAW_OUTLINED)
-
-
-clang_error_panel = ClangErrorPanel()
-
 
 def clear_error_marks():
     global ERRORS, WARNINGS
@@ -237,3 +217,4 @@ class SublimeClangStatusbarUpdater(sublime_plugin.EventListener):
 
     def on_load(self, view):
         self.show_errors(view)
+"""

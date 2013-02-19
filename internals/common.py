@@ -31,6 +31,16 @@ import sys
 from Pymacs import lisp
 import time
 
+class Settings():
+    def __init__(self):
+        self._dict = {}
+
+    def get(self, key, default):
+        if (self._dict.has_key(key)):
+            return self._dict[key]
+
+        return default
+
 if sys.version[0] == '2':
     def sencode(s):
         return s.encode("utf-8")
@@ -86,9 +96,13 @@ loaded = False
 loaded_callbacks = []
 emacs_logger = EmacsLog("common")
 
-def getBufferAsText(file_name):
+def getBufferAsText(file_name, beg = 0, end = 0):
     f=open(file_name,"r")
-    text=f.read()
+    if end != 0 and beg < end:
+        f.seek(beg)
+        text = f.read(end - beg)
+    else:
+        text = f.read()
     f.close()
     return text
 
@@ -97,6 +111,35 @@ def writeBuffer(file_name, text):
     f.write(text)
     f.close()
     self.reloadBuffer()
+
+def format_current_file(view):
+    row, col = view.rowcol(view.sel()[0].a)
+    return "%s:%d:%d" % (sencode(view.file_name()), row + 1, col + 1)
+
+def goto_line():
+    lisp.goto_char(lisp.point_min())
+    for i in range(1, line_num):
+        lisp.forward_line(i)
+
+def get_line_till_point(line_num, point):
+    goto_line(line_num)
+    beg = lisp.point()
+    line = getBufferAsText(lisp.buffer_file_name(), beg, current_pos)
+    lisp.goto_char(current_pos)
+    return line
+
+def get_row_col(line_num, point):
+    goto_line(line_num)
+    col = point - lisp.point()
+    lisp.goto_char(point)
+    return (line_num, col)
+
+def open_file(filename):
+    arr = filename.split(":")
+    file_name, line_num, col_num = arr[0], int(arr[1]), int(arr[2])
+    lisp.find_file(filename)
+    goto_line(line_num)
+    lisp.goto_char(lisp.point() + col_num)
 
 def plugin_loaded():
     global loaded
@@ -129,7 +172,7 @@ def get_language():
     if ( file_name == None ):
         return None
 
-    if ( file_name[-4:] == '.cpp' )
+    if ( file_name[-4:] == '.cpp' ):
         return 'c++'
     elif ( file_name[-2:] == '.c' or file_name[-2:] == '.h' ):
         return 'c'
@@ -151,7 +194,7 @@ def is_supported_language():
     return True
 
 def get_settings():
-    return sublime.load_settings("SublimeClang.sublime-settings")
+    return Settings()
 
 def get_setting(key, default=None):
     return get_settings().get(key, default)
