@@ -1,2 +1,0 @@
-=== Description ===
-This is my effort to get the excellent [[https://github.com/quarnster/SublimeClang|SublimeClang]] plugin to work in Emacs with the help of [[https://github.com/pinard/Pymacs|Pymacs]]. Please note that the plugin is being developed solely with my usage in mind, and as such won't be actively developed once it reaches the "works-for-me" stage. Issues raised will be addressed only if they affect me too or are easily fixable.
