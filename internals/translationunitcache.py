@@ -24,7 +24,7 @@ freely, subject to the following restrictions:
 import os
 import sys
 
-from .common import Worker, complete_path, expand_path, get_setting, get_path_setting,\
+from .common import Worker, complete_path, get_setting, get_path_setting,\
                     get_language, LockedVariable, run_in_main_thread, error_message,\
                     display_user_selection, get_cpu_count, status_message, bencode, bdecode, are_we_there_yet
 from .clang import cindex

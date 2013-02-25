@@ -1,11 +1,12 @@
 import json
+import re
 
 class Selection:
-    def init(self, region):
+    def __init__(self, region):
         self._region = region
 
 class Region:
-    def init(self, begin, end):
+    def __init__(self, begin, end):
         self._begin = begin
         self._end = end
 
@@ -24,7 +25,7 @@ class Region:
         return self._end
 
 class Settings:
-    def init(self, settings):
+    def __init__(self, settings):
         self._settings = settings
 
     def has(self, name):
@@ -40,7 +41,7 @@ class Settings:
         return default
 
 class View:
-    def init(self, file_name, line_num, col_num):
+    def __init__(self, file_name, line_num, col_num):
         self._file = open(file_name, 'r')
 
         content = self._file.readlines()
