@@ -125,38 +125,6 @@ try:
             pass
         return get_settings().get(key, default)
 
-    def expand_path(value, window):
-        if window == None:
-            # Views can apparently be window less, in most instances getting
-            # the active_window will be the right choice (for example when
-            # previewing a file), but the one instance this is incorrect
-            # is during Sublime Text 2 session restore. Apparently it's
-            # possible for views to be windowless then too and since it's
-            # possible that multiple windows are to be restored, the
-            # "wrong" one for this view might be the active one and thus
-            # ${project_path} will not be expanded correctly.
-            #
-            # This will have to remain a known documented issue unless
-            # someone can think of something that should be done plugin
-            # side to fix this.
-            window = sublime.active_window()
-
-        get_existing_files = \
-            lambda m: [ path \
-                for f in window.folders() \
-                for path in [os.path.join(f, m.group('file'))] \
-                if os.path.exists(path) \
-            ]
-        view = window.active_view()
-        value = re.sub(r'\${project_path:(?P<file>[^}]+)}', lambda m: len(get_existing_files(m)) > 0 and get_existing_files(m)[0] or m.group('file'), value)
-        value = re.sub(r'\${env:(?P<variable>[^}]+)}', lambda m: os.getenv(m.group('variable')) if os.getenv(m.group('variable')) else "%s_NOT_SET" % m.group('variable'), value)
-        value = re.sub(r'\${home}', re.escape(os.getenv('HOME')) if os.getenv('HOME') else "HOME_NOT_SET", value)
-        value = re.sub(r'\${folder:(?P<file>[^}]+)}', lambda m: os.path.dirname(m.group('file')), value)
-        value = value.replace('${this_file_path}', os.path.dirname(view.file_name()) if view and view.file_name() else "FILE_NOT_ON_DISK")
-        value = value.replace('\\', '/')
-
-        return value
-
     def display_user_selection(options, callback):
         sublime.active_window().show_quick_panel(options, callback)
 
@@ -179,9 +147,6 @@ except:
 
     def status_message(msg):
         print(msg)
-
-    def expand_path(value, window):
-        return value
 
     def display_user_selection(options, callback):
         callback(0)
@@ -264,17 +229,15 @@ def complete_path(value):
     else:
         return [value]
 
-
 def get_path_setting(key, default=None, view=None):
     value = get_setting(key, default, view)
     opts = []
     if isinstance(value, list):
         for v in value:
-            opts.append(expand_path(v, view.window()))
+            opts.append(v)
     else:
-        opts.append(expand_path(value, view.window()))
+        opts.append(value)
     return opts
-
 
 def get_cpu_count():
     cpus = 1
