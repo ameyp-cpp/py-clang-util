@@ -521,17 +521,3 @@ class SublimeClangAutoComplete(sublime_plugin.EventListener):
     def on_close(self, view):
         if self.remove_on_close and is_supported_language(view):
             translationunitcache.tuCache.remove(sencode(view.file_name()))
-
-    def on_query_context(self, view, key, operator, operand, match_all):
-        if key == "clang_supported_language":
-            if view == None:
-                view = sublime.active_window().active_view()
-            return is_supported_language(view)
-        elif key == "clang_is_code":
-            return self.not_code_regex.search(view.scope_name(view.sel()[0].begin())) == None
-        elif key == "clang_complete_enabled":
-            return clang_complete_enabled
-        elif key == "clang_automatic_completion_popup":
-            return get_setting("automatic_completion_popup", True, view)
-        elif key == "clang_panel_visible":
-            return clang_error_panel.is_visible()
