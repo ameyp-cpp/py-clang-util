@@ -41,7 +41,7 @@ class Settings:
         return default
 
 class View:
-    def __init__(self, file_name, line_num, col_num, flags=[]):
+    def __init__(self, file_name, line_num, col_num, flags=[], is_dirty=False, content=""):
         self._file = open(file_name, 'rU')
 
         for i in range(0, line_num):
@@ -49,41 +49,82 @@ class View:
 
         self._sel = [Region(self._file.tell(), self._file.tell() + col_num)]
         self._settings = Settings({"sublimeclang_options": flags})
+        self._is_dirty = is_dirty
+
+        if self._is_dirty:
+            self._content = content
+        else
+            self._content = ""
 
     def file_name(self):
         return self._file.name
 
     def line(self, position):
-        self._file.seek(0)
-        content = self._file.read(position)
-        beg = content.rfind('\n') + 1
-        self._file.readline()
-        end = self._file.tell() - 1
+        content = ""
+        beg, end = 0, 0
+
+        if not self.is_dirty():
+            self._file.seek(0)
+            content = self._file.read(position)
+            beg = content.rfind('\n') + 1
+            self._file.readline()
+            end = self._file.tell() - 1
+        else:
+            content = self._content[:position].rfind('\n') + 1
+            end = self._content.find('\n', beg)
+
         return Region(beg, end)
 
     def substr(self, region):
-        self._file.seek(region.begin())
-        content = self._file.read(region.end() - region.begin())
+        content = ""
+
+        if not self.is_dirty():
+            self._file.seek(region.begin())
+            content = self._file.read(region.end() - region.begin())
+        else:
+            content = self._content[region.begin():region.end()]
+
         return content
 
     def rowcol(self, position):
-        self._file.seek(0)
-        content = self._file.read(position)
-        newlines = content.count('\n')
+        newlines, column = 0, 0
 
-        self._file.seek(0)
-        for i in range(0, newlines):
-            self._file.readline()
+        if not self.is_dirty():
+            self._file.seek(0)
+            content = self._file.read(position)
+            newlines = content.count('\n')
 
-        column = position - self._file.tell()
+            self._file.seek(0)
+            for i in range(0, newlines):
+                self._file.readline()
+            column = position - self._file.tell()
+        else:
+            newlines = self._content[:position].count('\n')
+            beg_of_line = -1
+            for i in range(0, newlines):
+                beg_of_line = self._content[:position].find('\n', beg_of_line + 1)
+            column = position - beg_of_line
+
         return newlines, column
+
+    def size(self):
+        length = 0
+
+        if not self.is_dirty():
+            self._file.seek(0)
+            content = self._file.read()
+            length = len(content)
+        else:
+            length = len(self._content)
+
+        return length
 
     def scope_name(self, position):
         # Doesn't do anything
         return "source.c++"
 
     def is_dirty(self):
-        return False
+        return self._is_dirty
 
     def is_scratch(self):
         return False
