@@ -87,7 +87,7 @@ navigation_stack = []
 clang_complete_enabled = True
 clang_fast_completions = True
 
-
+"""
 class ClangTogglePanel(sublime_plugin.WindowCommand):
     def run(self, **args):
         show = args["show"] if "show" in args else None
@@ -233,7 +233,7 @@ class ClangReparse(sublime_plugin.TextCommand):
             unsaved_files.append((sencode(view.file_name()),
                           view.substr(Region(0, view.size()))))
         translationunitcache.tuCache.reparse(view, sencode(view.file_name()), unsaved_files)
-
+"""
 
 def ignore_diagnostic(path, ignoreDirs):
     normalized_path = os.path.abspath(os.path.normpath(os.path.normcase(path)))
@@ -315,20 +315,11 @@ def display_compilation_results(view):
         if warningCount > 0:
             statusString = "%s%s%d Warning%s" % (statusString, ", " if errorCount > 0 else "",
                                                  warningCount, "s" if warningCount != 1 else "")
-        view.set_status("SublimeClang", statusString)
+        status_message("SublimeClang", statusString)
     else:
-        view.erase_status("SublimeClang")
-    window = view.window()
+        status_message("SublimeClang")
+
     clang_error_panel.set_data(errString)
-    update_statusbar(view)
-    if not get_setting("error_marks_on_panel_only", False, view):
-        show_error_marks(view)
-    if not window is None:
-        if show:
-            window.run_command("clang_toggle_panel", {"show": True})
-        elif get_setting("hide_output_when_empty", False, view):
-            if clang_error_panel.is_visible():
-                window.run_command("clang_toggle_panel", {"show": False})
 
 member_regex = re.compile(r"(([a-zA-Z_]+[0-9_]*)|([\)\]])+)((\.)|(->))$")
 
@@ -341,7 +332,7 @@ def is_member_completion(view, caret):
         return re.search(r"\[[\.\->\s\w\]]+\s+$", line) != None
     return False
 
-
+"""
 class ClangComplete(sublime_plugin.TextCommand):
     def run(self, edit, characters):
         regions = [a for a in self.view.sel()]
@@ -365,7 +356,7 @@ class ClangComplete(sublime_plugin.TextCommand):
 
     def delayed_complete(self):
         self.view.run_command("auto_complete")
-
+"""
 
 class SublimeClangAutoComplete(sublime_plugin.EventListener):
     def __init__(self):
@@ -403,8 +394,7 @@ class SublimeClangAutoComplete(sublime_plugin.EventListener):
     def on_query_completions(self, view, prefix, locations):
         print "Prefix = ", prefix, ", Locations = ", locations
         global clang_complete_enabled
-        if not is_supported_language(view) or not clang_complete_enabled or \
-                not view.match_selector(locations[0], '-string -comment -constant'):
+        if not is_supported_language(view) or not clang_complete_enabled:
             return []
 
         line = view.substr(sublime.Region(view.line(locations[0]).begin(), locations[0]))
