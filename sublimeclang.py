@@ -81,7 +81,7 @@ def get_translation_unit(view, filename=None, blocking=False):
         elif stat == translationunitcache.TranslationUnitCache.STATUS_PARSING:
             sublime.status_message("Hold your horses, cache still warming up")
             return None
-    return translationunitcache.tuCache.get_translation_unit(filename, translationunitcache.tuCache.get_opts(view), translationunitcache.tuCache.get_opts_script(view))
+    return translationunitcache.tuCache.get_translation_unit(filename, translationunitcache.tuCache.get_opts(view))
 
 navigation_stack = []
 clang_complete_enabled = True
@@ -361,8 +361,6 @@ class ClangComplete(sublime_plugin.TextCommand):
 class SublimeClangAutoComplete():
     def __init__(self):
         s = get_settings()
-        s.clear_on_change("options")
-        s.add_on_change("options", self.load_settings)
         are_we_there_yet(lambda: self.load_settings())
         self.recompile_timer = None
         self.not_code_regex = re.compile("(string.)|(comment.)")
@@ -392,7 +390,7 @@ class SublimeClangAutoComplete():
         return comp
 
     def on_query_completions(self, view, prefix, locations):
-        print "Prefix = ", prefix, ", Locations = ", locations
+        print "Prefix = ", len(prefix), ", Locations = ", locations
         global clang_complete_enabled
         if not is_supported_language(view) or not clang_complete_enabled:
             return []
