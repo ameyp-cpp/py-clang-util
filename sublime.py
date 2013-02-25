@@ -1,9 +1,8 @@
-class Selection:
-    def init(self, regions):
-        self._regions = regions
+import json
 
-    def clear():
-        self._regions = []
+class Selection:
+    def init(self, region):
+        self._region = region
 
 class Region:
     def init(self, begin, end):
@@ -24,6 +23,22 @@ class Region:
     def b(self):
         return self._end
 
+class Settings:
+    def init(self, settings):
+        self._settings = settings
+
+    def has(self, name):
+        if name in self._settings.keys():
+            return True
+
+        return False
+
+    def get(self, name, default=None):
+        if self.has(name):
+            return self._settings[name]
+
+        return default
+
 class View:
     def init(self, file_name, line_num, col_num):
         self._file = open(file_name, 'r')
@@ -32,7 +47,8 @@ class View:
         for i in range(1, line_num):
             self._file.readline()
 
-        self._sel = Selection([Region(self._file.tell(), self._file.tell() + col_num - 1)])
+        self._sel = [Selection(Region(self._file.tell(), self._file.tell() + col_num - 1))]
+        self._settings = {}
 
     def file_name(self):
         return self._file.name
@@ -60,8 +76,33 @@ class View:
         column = position - self._file.tell()
         return newlines + 1, column + 1
 
+    def scope_name(self, position):
+        # Doesn't do anything
+        return "source.c++"
+
     def is_dirty():
+        return False
+
+    def is_scratch():
         return False
 
     def sel(self):
         return self._sel
+
+    def settings(self):
+        return self._settings
+
+def load_settings(settings_file):
+    fd = open(settings_file, 'r')
+    content = fd.read()
+
+    # strip comments
+    comment_re = re.compile(
+        '(^)?[^\S\n]*/(?:\*(.*?)\*/[^\S\n]*|/[^\n]*)($)?',
+        re.DOTALL | re.MULTILINE)
+    match = comment_re.search(content)
+    while match:
+        content = content[:match.start()] + content[match.end():]
+        match = comment_re.search(content)
+
+    return Settings(json.loads(content))
