@@ -53,7 +53,7 @@ class View:
 
         if self._is_dirty:
             self._content = content
-        else
+        else:
             self._content = ""
 
     def file_name(self):
