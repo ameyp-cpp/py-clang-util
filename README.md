@@ -10,7 +10,7 @@ I don't know if this works on Windows, and I'm not going to try to get it to wor
 ## Features
 
 1. Get code completion candidates at a position in a file.
-The results are cached, making subsequent lookups in the same file faster.
+The results are cached, making subsequent lookups in the same file faster. [Working]
 2. Go to parent refernce of word at a position in a file [Pending]
 3. Go to implementation of word at a position in a file [Pending]
 4. Get a list of compilation errors in a file [Pending]
@@ -47,7 +47,6 @@ Line and column numbers and cursor position all start at 0 for the purpose of cr
     # alphanumeric string for variable-name completions.
     # For example, some_object-> would have prefix "", while some_object->s would have prefix "s"
     prefix = ""
-    # Or at least that's how it's supposed to work in theory. In practice, I only have the first case working so far.
 
     auto_completer = sublimeclang.SublimeClangAutoComplete()
     completions = auto_completer.on_query_completions(view, prefix, view.position)

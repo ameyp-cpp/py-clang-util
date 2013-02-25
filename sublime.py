@@ -134,7 +134,7 @@ class View:
 
     @property
     def position(self):
-        position = [self.sel()[0].begin()]
+        return [self.sel()[0].begin()]
 
 def load_settings(settings_file):
     fd = open(settings_file, 'rU')
