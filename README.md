@@ -10,6 +10,7 @@ I don't know if this works on Windows, and I'm not going to try to get it to wor
 ## Features
 
 1. Get code completion candidates at a position in a file. [Partially working]
+
    The results are cached, making subsequent lookups in the same file faster.
 2. Go to parent refernce of word at a position in a file [Pending]
 3. Go to implementation of word at a position in a file [Pending]
