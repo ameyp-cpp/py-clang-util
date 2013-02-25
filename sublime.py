@@ -41,13 +41,10 @@ class Settings:
         return default
 
 class View:
-    def __init__(self, file_name, line_num, col_num, flags=[], is_dirty=False, content=""):
+    def __init__(self, file_name, position, flags=[], is_dirty=False, content=""):
         self._file = open(file_name, 'rU')
 
-        for i in range(0, line_num):
-            self._file.readline()
-
-        self._sel = [Region(self._file.tell(), self._file.tell() + col_num)]
+        self._sel = [Region(position, position)]
         self._settings = Settings({"sublimeclang_options": flags})
         self._is_dirty = is_dirty
 
@@ -134,6 +131,10 @@ class View:
 
     def settings(self):
         return self._settings
+
+    @property
+    def position(self):
+        position = [self.sel()[0].begin()]
 
 def load_settings(settings_file):
     fd = open(settings_file, 'rU')
