@@ -22,7 +22,7 @@
 
     // Number of worker threads to create. If set to -1 it'll create
     // one thread per cpu
-    "worker_threadcount": -1,
+    "worker_threadcount": 1,
 
     // Whether or not fast completions are enabled. Usually you'd put
     // "sublimeclang_enable_fast_completions": false, in the project
@@ -85,7 +85,7 @@
     // the file, but commands will work the first time they are
     // executed rather than the first time after warm up has
     // finished
-    "warm_up_in_separate_thread": true,
+    "warm_up_in_separate_thread": false,
 
     // If set to true will warm up the cache for supported files
     // when they are opened
@@ -129,7 +129,7 @@
     "time_completions": false,
 
     // Whether or not to inhibit the Sublime Text 2 built in word completions
-    "inhibit_sublime_completions": true,
+    "inhibit_sublime_completions": false,
 
     // Don't show stuff in the autocomplete list when the name starts with the following
     "dont_complete_startswith":
@@ -265,14 +265,14 @@
     // For help getting up and running with iOS development see https://github.com/quarnster/SublimeClang/issues/52
     "options":
     [
-        "-isystem", "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.7.sdk/usr/include/",
-        "-isystem", "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.7.sdk/usr/include/c++/4.2.1",
-        "-F/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.7.sdk/System/Library/Frameworks/",
-        "-Wno-deprecated-declarations",
-        "-isystem", "C:\\MinGW\\lib\\gcc\\mingw32\\4.7.0\\include",
-        "-isystem", "C:\\MinGW\\lib\\gcc\\mingw32\\4.7.0\\include\\c++",
-        "-isystem", "C:\\MinGW\\lib\\gcc\\mingw32\\4.7.0\\include\\c++\\mingw32",
-        "-isystem", "C:\\MinGW\\include",
+        //"-isystem", "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.7.sdk/usr/include/",
+        //"-isystem", "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.7.sdk/usr/include/c++/4.2.1",
+        //"-F/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.7.sdk/System/Library/Frameworks/",
+        //"-Wno-deprecated-declarations",
+        //"-isystem", "C:\\MinGW\\lib\\gcc\\mingw32\\4.7.0\\include",
+        //"-isystem", "C:\\MinGW\\lib\\gcc\\mingw32\\4.7.0\\include\\c++",
+        //"-isystem", "C:\\MinGW\\lib\\gcc\\mingw32\\4.7.0\\include\\c++\\mingw32",
+        //"-isystem", "C:\\MinGW\\include",
         "-isystem", "/usr/include",
         "-isystem", "/usr/include/c++/*",
         "-Wall"
