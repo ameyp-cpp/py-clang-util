@@ -41,14 +41,14 @@ class Settings:
         return default
 
 class View:
-    def __init__(self, file_name, line_num, col_num):
-        self._file = open(file_name, 'r')
+    def __init__(self, file_name, line_num, col_num, flags=[]):
+        self._file = open(file_name, 'rU')
 
         for i in range(0, line_num):
             self._file.readline()
 
         self._sel = [Region(self._file.tell(), self._file.tell() + col_num)]
-        self._settings = {}
+        self._settings = Settings({"sublimeclang_options": flags})
 
     def file_name(self):
         return self._file.name
@@ -95,7 +95,7 @@ class View:
         return self._settings
 
 def load_settings(settings_file):
-    fd = open(settings_file, 'r')
+    fd = open(settings_file, 'rU')
     content = fd.read()
 
     # strip comments
