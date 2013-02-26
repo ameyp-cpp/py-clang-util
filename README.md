@@ -11,8 +11,8 @@ I don't know if this works on Windows, and I'm not going to try to get it to wor
 
 1. Get code completion candidates at a position in a file.
 The results are cached, making subsequent lookups in the same file faster. [Working]
-2. Go to parent refernce of word at a position in a file [Pending]
-3. Go to implementation of word at a position in a file [Pending]
+2. Go to definition/implementation of symbol at a position in a file [Working]
+3. Go to parent reference of word at a position in a file [Pending]
 4. Get a list of compilation errors in a file [Pending]
 
 Line and column numbers and cursor position all start at 0 for the purpose of creating the View object.
@@ -50,6 +50,34 @@ Line and column numbers and cursor position all start at 0 for the purpose of cr
 
     auto_completer = sublimeclang.SublimeClangAutoComplete()
     completions = auto_completer.on_query_completions(view, prefix, view.position)
+
+    # List of folders to search in for definition/implementation
+    folders = ["/home/user/project"]
+
+    # Updated view with cursor at a different position, preferably on a symbol
+    view = View("/home/user/project/src/main.cpp", # file's path
+    	        256, # position in file where symbol is located
+		flags) # CPP flags
+
+    # Function to be called once execution is finished.
+    # Will be one of
+    # 1. None if no results were found.
+    # 2. A single string if only one result was found.
+    # 3. A list of strings if multiple results were found.
+    #
+    # Each result will be in the format "filepath:line:column"
+    def found(target):
+    	if target == None:
+	    print "Unable to find target"
+
+	print target
+
+    # Create the goto object
+    cgb = sublimeclang.SublimeClangGoto()
+
+    # The first argument should be "definition" or "implementation"
+    cgb.goto("definition", view, folders, found)
+
 ```
 The completions object returned is a list of all possible completions. Each item in the list is a tuple.
 The first element of the tuple is the completion's (i.e. the corresponding reference's) declaration, in the form `Declaration\tReturn-type`.

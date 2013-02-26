@@ -159,57 +159,26 @@ def open(view, target):
     navigation_stack.append((format_current_file(view), target))
     view.window().open_file(target, sublime.ENCODED_POSITION)
 
-
-class ClangGotoBase(sublime_plugin.TextCommand):
-
-    def get_target(self, tu, data, offset, found_callback, folders):
-        pass
-
-    def found_callback(self, target):
-        if target == None:
-            status_message("Don't know where the %s is!" % self.goto_type)
-        elif not isinstance(target, list):
-            open(self.view, target)
-        else:
-            self.targets = target
-            self.view.window().show_quick_panel(target, self.open_file)
-
-    def open_file(self, idx):
-        if idx >= 0:
-            target = self.targets[idx]
-            if isinstance(target, list):
-                target = target[1]
-            open(self.view, target)
-
-    def run(self, edit):
-        view = self.view
+"""
+class SublimeClangGoto():
+    def goto(self, goto_type, view, folders, found_callback):
+        self._goto_type = goto_type
         tu = get_translation_unit(view)
         if tu == None:
             return
 
+        if self._goto_type == "implementation":
+            tu_get_fn = tu.get_implementation
+
+        elif self._goto_type == "definition":
+            tu_get_fn = tu.get_definition
+        else:
+            return
+
         offset = view.sel()[0].a
         data = view.substr(sublime.Region(0, view.size()))
-        self.get_target(tu, data, offset, self.found_callback, self.view.window().folders())
 
-
-    def is_enabled(self):
-        return is_supported_language(sublime.active_window().active_view())
-
-    def is_visible(self):
-        return is_supported_language(sublime.active_window().active_view())
-
-
-class ClangGotoImplementation(ClangGotoBase):
-    def get_target(self, tu, data, offset, found_callback, folders):
-        self.goto_type = "implementation"
-        return tu.get_implementation(data, offset, found_callback, folders)
-
-
-class ClangGotoDef(ClangGotoBase):
-    def get_target(self, tu, data, offset, found_callback, folders):
-        self.goto_type = "definition"
-        return tu.get_definition(data, offset, found_callback, folders)
-"""
+        tu_get_fn(data, offset, found_callback, folders)
 
 def ignore_diagnostic(path, ignoreDirs):
     normalized_path = os.path.abspath(os.path.normpath(os.path.normcase(path)))
@@ -217,7 +186,6 @@ def ignore_diagnostic(path, ignoreDirs):
         if normalized_path.startswith(d):
             return True
     return False
-
 
 def display_compilation_results(view):
     tu = get_translation_unit(view)
