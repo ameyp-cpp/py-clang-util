@@ -225,14 +225,6 @@ class ClangClearCache(sublime_plugin.TextCommand):
         sublime.status_message("Cache cleared!")
 
 
-class ClangReparse(sublime_plugin.TextCommand):
-    def run(self, edit):
-        view = self.view
-        unsaved_files = []
-        if view.is_dirty():
-            unsaved_files.append((sencode(view.file_name()),
-                          view.substr(Region(0, view.size()))))
-        translationunitcache.tuCache.reparse(view, sencode(view.file_name()), unsaved_files)
 """
 
 def ignore_diagnostic(path, ignoreDirs):
@@ -448,6 +440,13 @@ class SublimeClangAutoComplete():
         if not ret is None:
             return self.return_completions(ret, view)
         return self.return_completions([], view)
+
+    def reparse(self, view):
+        unsaved_files = []
+        if view.is_dirty():
+            unsaved_files.append((sencode(view.file_name()),
+                          view.substr(Region(0, view.size()))))
+        translationunitcache.tuCache.reparse(view, sencode(view.file_name()), unsaved_files)
 
     def reparse_done(self):
         display_compilation_results(self.view)
