@@ -1082,7 +1082,7 @@ class TranslationUnitCache(Worker):
             run_in_main_thread(on_done)
 
     def task_reparse(self, data):
-        filename, opts, unsaved_files, on_done = data
+        filename, opts, unsaved_files, on_done, on_done_args = data
         if self.add_busy(filename, self.task_reparse, data):
             return
         try:
@@ -1104,7 +1104,7 @@ class TranslationUnitCache(Worker):
                 self.parsingList.unlock()
                 self.remove_busy(filename)
         if on_done != None:
-            run_in_main_thread(on_done)
+            run_in_main_thread(on_done, on_done_args)
 
     def task_clear(self, data):
         tus = self.translationUnits.lock()
@@ -1138,7 +1138,7 @@ class TranslationUnitCache(Worker):
         finally:
             self.remove_busy(data)
 
-    def reparse(self, view, filename, unsaved_files=[], on_done=None):
+    def reparse(self, view, filename, unsaved_files=[], on_done=None, on_done_args=()):
         ret = False
         pl = self.parsingList.lock()
         try:
@@ -1147,7 +1147,7 @@ class TranslationUnitCache(Worker):
                 pl.append(filename)
                 self.tasks.put((
                     self.task_reparse,
-                    (filename, self.get_opts(view), unsaved_files, on_done)))
+                    (filename, self.get_opts(view), unsaved_files, on_done, on_done_args)))
         finally:
             self.parsingList.unlock()
         return ret

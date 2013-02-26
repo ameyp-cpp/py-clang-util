@@ -74,9 +74,10 @@ try:
         else:
             loaded_callbacks.append(x)
 
-    def run_in_main_thread(func):
-        sublime.set_timeout(func, 0)
-
+    def run_in_main_thread(func, args=()):
+        #sublime.set_timeout(func, 0)
+        print args
+        func(*args)
 
     def error_message(msg):
         # Work around for http://www.sublimetext.com/forum/viewtopic.php?f=3&t=9825

@@ -38,7 +38,7 @@ try:
 #    from errormarkers import clear_error_marks, add_error_mark, show_error_marks, \
 #                             update_statusbar, erase_error_marks, clang_error_panel
     from internals.common import get_setting, get_settings, is_supported_language, \
-                                 get_language,get_cpu_count, run_in_main_thread, \
+                                 get_language,get_cpu_count, \
                                  status_message, sencode, are_we_there_yet, plugin_loaded
     from internals import translationunitcache
     from internals.parsehelp import parsehelp
@@ -49,7 +49,7 @@ except:
     from .errormarkers import clear_error_marks, add_error_mark, show_error_marks, \
                              update_statusbar, erase_error_marks, clang_error_panel
     from .internals.common import get_setting, get_settings, is_supported_language, \
-                                    get_language,get_cpu_count, run_in_main_thread, \
+                                    get_language,get_cpu_count, \
                                     status_message, sencode, are_we_there_yet, plugin_loaded
     from .internals import translationunitcache
     from .internals.parsehelp import parsehelp
@@ -117,14 +117,6 @@ class ClangToggleFastCompletions(sublime_plugin.TextCommand):
         clang_fast_completions = not clang_fast_completions
         status_message("Clang fast completions are %s" % ("On" if clang_fast_completions else "Off"))
 
-
-class ClangWarmupCache(sublime_plugin.TextCommand):
-    def run(self, edit):
-        stat = warm_up_cache(self.view)
-        if stat == translationunitcache.TranslationUnitCache.STATUS_PARSING:
-            status_message("Cache is already warming up")
-        elif stat != translationunitcache.TranslationUnitCache.STATUS_NOT_IN_CACHE:
-            status_message("Cache is already warmed up")
 
 
 class ClangGoBackEventListener(sublime_plugin.EventListener):
@@ -217,10 +209,6 @@ class ClangGotoDef(ClangGotoBase):
     def get_target(self, tu, data, offset, found_callback, folders):
         self.goto_type = "definition"
         return tu.get_definition(data, offset, found_callback, folders)
-
-
-
-
 """
 
 def ignore_diagnostic(path, ignoreDirs):
@@ -235,8 +223,8 @@ def display_compilation_results(view):
     tu = get_translation_unit(view)
     errString = ""
     show = False
-    clear_error_marks()  # clear visual error marks
-    erase_error_marks(view)
+    #clear_error_marks()  # clear visual error marks
+    #erase_error_marks(view)
     if tu == None:
         return
 
@@ -291,8 +279,7 @@ def display_compilation_results(view):
                 for fix in diag.fixits:
                     errString = "%s%s\n" % (errString, fix)
                 """
-                add_error_mark(
-                    diag.severityName, filename, f.line - 1, diag.spelling)
+                # add_error_mark(diag.severityName, filename, f.line - 1, diag.spelling)
             show = errString and get_setting("show_output_panel", True, view)
     finally:
         tu.unlock()
@@ -303,11 +290,9 @@ def display_compilation_results(view):
         if warningCount > 0:
             statusString = "%s%s%d Warning%s" % (statusString, ", " if errorCount > 0 else "",
                                                  warningCount, "s" if warningCount != 1 else "")
-        status_message("SublimeClang", statusString)
-    else:
-        status_message("SublimeClang")
+        status_message(statusString)
 
-    clang_error_panel.set_data(errString)
+    # clang_error_panel.set_data(errString)
 
 member_regex = re.compile(r"(([a-zA-Z_]+[0-9_]*)|([\)\]])+)((\.)|(->))$")
 
@@ -442,10 +427,17 @@ class SublimeClangAutoComplete():
         if view.is_dirty():
             unsaved_files.append((sencode(view.file_name()),
                           view.substr(Region(0, view.size()))))
-        translationunitcache.tuCache.reparse(view, sencode(view.file_name()), unsaved_files, self.reparse_done)
+        translationunitcache.tuCache.reparse(view, sencode(view.file_name()), unsaved_files, self.reparse_done, (view,))
 
-    def reparse_done(self):
-        display_compilation_results(self.view)
+    def reparse_done(self, view):
+        display_compilation_results(view)
+
+    def warmup_cache(self):
+        stat = warm_up_cache(self.view)
+        if stat == translationunitcache.TranslationUnitCache.STATUS_PARSING:
+            status_message("Cache is already warming up")
+        elif stat != translationunitcache.TranslationUnitCache.STATUS_NOT_IN_CACHE:
+            status_message("Cache is already warmed up")
 
     def clear_cache(self):
         translationunitcache.tuCache.clear()
