@@ -324,13 +324,6 @@ def display_compilation_results(view):
 member_regex = re.compile(r"(([a-zA-Z_]+[0-9_]*)|([\)\]])+)((\.)|(->))$")
 
 
-def is_member_completion(view, caret):
-    line = view.substr(Region(view.line(caret).a, caret))
-    if member_regex.search(line) != None:
-        return True
-    elif get_language(view).startswith("objc"):
-        return re.search(r"\[[\.\->\s\w\]]+\s+$", line) != None
-    return False
 
 class SublimeClangAutoComplete():
     def __init__(self):
@@ -338,6 +331,14 @@ class SublimeClangAutoComplete():
         are_we_there_yet(lambda: self.load_settings())
         self.recompile_timer = None
         self.not_code_regex = re.compile("(string.)|(comment.)")
+
+    def is_member_completion(self, view, caret):
+        line = view.substr(Region(view.line(caret).a, caret))
+        if member_regex.search(line) != None:
+            return True
+        elif get_language(view).startswith("objc"):
+            return re.search(r"\[[\.\->\s\w\]]+\s+$", line) != None
+        return False
 
     def load_settings(self):
         translationunitcache.tuCache.clear()
@@ -411,7 +412,8 @@ class SublimeClangAutoComplete():
                 if view.is_dirty():
                     unsaved_files.append((sencode(view.file_name()),
                                       view.substr(Region(0, view.size()))))
-                ret = tu.cache.clangcomplete(sencode(view.file_name()), row+1, col+1, unsaved_files, is_member_completion(view, locations[0] - len(prefix)))
+                ret = tu.cache.clangcomplete(sencode(view.file_name()), row+1, col+1, unsaved_files,
+                                             self.is_member_completion(view, locations[0] - len(prefix)))
             if self.time_completions:
                 curr = (time.time() - start)*1000
                 tot += curr
