@@ -219,10 +219,6 @@ class ClangGotoDef(ClangGotoBase):
         return tu.get_definition(data, offset, found_callback, folders)
 
 
-class ClangClearCache(sublime_plugin.TextCommand):
-    def run(self, edit):
-        translationunitcache.tuCache.clear()
-        sublime.status_message("Cache cleared!")
 
 
 """
@@ -446,10 +442,14 @@ class SublimeClangAutoComplete():
         if view.is_dirty():
             unsaved_files.append((sencode(view.file_name()),
                           view.substr(Region(0, view.size()))))
-        translationunitcache.tuCache.reparse(view, sencode(view.file_name()), unsaved_files)
+        translationunitcache.tuCache.reparse(view, sencode(view.file_name()), unsaved_files, self.reparse_done)
 
     def reparse_done(self):
         display_compilation_results(self.view)
+
+    def clear_cache(self):
+        translationunitcache.tuCache.clear()
+        status_message("Cache cleared!")
 
     def restart_recompile_timer(self, timeout):
         if self.recompile_timer != None:
