@@ -40,8 +40,8 @@ Line and column numbers and cursor position all start at 0 for the purpose of cr
     # Create the View object contains information about the file to be parsed.
 
     view = View("/home/user/project/src/main.cpp", # file's path
-    	        42, # position in file where completion is desired
-		flags) # CPP flags
+                42, # position in file where completion is desired
+                flags) # CPP flags
 
     # Prefix that triggered auto-completion. Blank string for member/static completions,
     # alphanumeric string for variable-name completions.
@@ -56,8 +56,8 @@ Line and column numbers and cursor position all start at 0 for the purpose of cr
 
     # Updated view with cursor at a different position, preferably on a symbol
     view = View("/home/user/project/src/main.cpp", # file's path
-    	        256, # position in file where symbol is located
-		flags) # CPP flags
+                256, # position in file where symbol is located
+                flags) # CPP flags
 
     # Function to be called once execution is finished.
     # Will be one of
@@ -68,9 +68,9 @@ Line and column numbers and cursor position all start at 0 for the purpose of cr
     # Each result will be in the format "filepath:line:column"
     def found(target):
         if target == None:
-	    print "Unable to find target"
+            print "Unable to find target"
         else:
-	    print target
+            print target
 
     # Create the goto object
     cgb = sublimeclang.SublimeClangGoto()
