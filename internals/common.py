@@ -108,11 +108,11 @@ try:
         return True
 
     def status_message(msg):
-        sublime.status_message(sdecode(msg))
+        # sublime.status_message(sdecode(msg))
+        print(sdecode(msg))
 
     def get_settings():
         return sublime.load_settings("SublimeClang.sublime-settings")
-
 
     def get_setting(key, default=None, view=None):
         try:

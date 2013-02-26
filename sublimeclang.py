@@ -79,7 +79,7 @@ def get_translation_unit(view, filename=None, blocking=False):
         if stat == translationunitcache.TranslationUnitCache.STATUS_NOT_IN_CACHE:
             return None
         elif stat == translationunitcache.TranslationUnitCache.STATUS_PARSING:
-            sublime.status_message("Hold your horses, cache still warming up")
+            status_message("Hold your horses, cache still warming up")
             return None
     return translationunitcache.tuCache.get_translation_unit(filename, translationunitcache.tuCache.get_opts(view))
 
@@ -108,23 +108,23 @@ class ClangToggleCompleteEnabled(sublime_plugin.TextCommand):
     def run(self, edit):
         global clang_complete_enabled
         clang_complete_enabled = not clang_complete_enabled
-        sublime.status_message("Clang complete is %s" % ("On" if clang_complete_enabled else "Off"))
+        status_message("Clang complete is %s" % ("On" if clang_complete_enabled else "Off"))
 
 
 class ClangToggleFastCompletions(sublime_plugin.TextCommand):
     def run(self, edit):
         global clang_fast_completions
         clang_fast_completions = not clang_fast_completions
-        sublime.status_message("Clang fast completions are %s" % ("On" if clang_fast_completions else "Off"))
+        status_message("Clang fast completions are %s" % ("On" if clang_fast_completions else "Off"))
 
 
 class ClangWarmupCache(sublime_plugin.TextCommand):
     def run(self, edit):
         stat = warm_up_cache(self.view)
         if stat == translationunitcache.TranslationUnitCache.STATUS_PARSING:
-            sublime.status_message("Cache is already warming up")
+            status_message("Cache is already warming up")
         elif stat != translationunitcache.TranslationUnitCache.STATUS_NOT_IN_CACHE:
-            sublime.status_message("Cache is already warmed up")
+            status_message("Cache is already warmed up")
 
 
 class ClangGoBackEventListener(sublime_plugin.EventListener):
@@ -175,7 +175,7 @@ class ClangGotoBase(sublime_plugin.TextCommand):
 
     def found_callback(self, target):
         if target == None:
-            sublime.status_message("Don't know where the %s is!" % self.goto_type)
+            status_message("Don't know where the %s is!" % self.goto_type)
         elif not isinstance(target, list):
             open(self.view, target)
         else:
@@ -429,7 +429,7 @@ class SublimeClangAutoComplete():
                 timing += ", Filter: %f" % (curr)
                 timing += ", Tot: %f ms" % (tot)
                 print(timing)
-                sublime.status_message(timing)
+                status_message(timing)
         finally:
             tu.unlock()
 
