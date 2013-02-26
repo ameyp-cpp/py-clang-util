@@ -48,11 +48,22 @@ Line and column numbers and cursor position all start at 0 for the purpose of cr
     # For example, some_object-> would have prefix "", while some_object->s would have prefix "s"
     prefix = ""
 
+    ## First example, auto-complete
+
     auto_completer = sublimeclang.SublimeClangAutoComplete()
-    completions = auto_completer.on_query_completions(view, prefix, view.position)
+
+    # Function to be called execution is finished.
+    def found_completions(completions):
+        # completions is a list of strings, or an empty list if no completions were found.
+        print completions
+
+    auto_completer.on_query_completions(view, prefix, view.position, found_completions)
 
     # List of folders to search in for definition/implementation
     folders = ["/home/user/project"]
+
+
+    ## Second example, jump to definition/implementation
 
     # Updated view with cursor at a different position, preferably on a symbol
     view = View("/home/user/project/src/main.cpp", # file's path
