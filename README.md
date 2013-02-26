@@ -67,10 +67,10 @@ Line and column numbers and cursor position all start at 0 for the purpose of cr
     #
     # Each result will be in the format "filepath:line:column"
     def found(target):
-    	if target == None:
+        if target == None:
 	    print "Unable to find target"
-
-	print target
+        else:
+	    print target
 
     # Create the goto object
     cgb = sublimeclang.SublimeClangGoto()
