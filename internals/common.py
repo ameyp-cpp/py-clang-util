@@ -65,70 +65,72 @@ def plugin_loaded():
         c()
     loaded_callbacks = []
 
-try:
-    import sublime
-    def are_we_there_yet(x):
-        global loaded_callbacks
-        if loaded:
-            x()
-        else:
-            loaded_callbacks.append(x)
+from .. import sublime
+def are_we_there_yet(x):
+    global loaded_callbacks
+    if loaded:
+        x()
+    else:
+        loaded_callbacks.append(x)
 
-    def run_in_main_thread(func, args=()):
-        #sublime.set_timeout(func, 0)
-        print args
-        func(*args)
+def run_in_main_thread(func, args=()):
+    #sublime.set_timeout(func, 0)
+    print args
+    func(*args)
 
-    def error_message(msg):
-        # Work around for http://www.sublimetext.com/forum/viewtopic.php?f=3&t=9825
-        if sublime.active_window() == None:
-            sublime.set_timeout(lambda: error_message(msg), 500)
-        else:
-            sublime.error_message(msg)
+def error_message(msg):
+    # Work around for http://www.sublimetext.com/forum/viewtopic.php?f=3&t=9825
+    if sublime.active_window() == None:
+        sublime.set_timeout(lambda: error_message(msg), 500)
+    else:
+        sublime.error_message(msg)
 
-    language_regex = re.compile("(?<=source\.)[\w+#]+")
-
-
-    def get_language(view):
-        caret = view.sel()[0].a
-        language = language_regex.search(view.scope_name(caret))
-        if language == None:
-            return None
-        return language.group(0)
+language_regex = re.compile("(?<=source\.)[\w+#]+")
 
 
-    def is_supported_language(view):
-        if view.is_scratch() or not get_setting("enabled", True, view) or view.file_name() == None:
-            return False
-        language = get_language(view)
-        if language == None or (language != "c++" and
-                                language != "c" and
-                                language != "objc" and
-                                language != "objc++"):
-            return False
-        return True
+def get_language(view):
+    caret = view.sel()[0].a
+    language = language_regex.search(view.scope_name(caret))
+    if language == None:
+        return None
+    return language.group(0)
 
-    def status_message(msg):
-        # sublime.status_message(sdecode(msg))
-        print(sdecode(msg))
 
-    def get_settings():
-        return sublime.load_settings("SublimeClang.sublime-settings")
+def is_supported_language(view):
+    if view.is_scratch() or not get_setting("enabled", True, view) or view.file_name() == None:
+        return False
+    language = get_language(view)
+    if language == None or (language != "c++" and
+                            language != "c" and
+                            language != "objc" and
+                            language != "objc++"):
+        return False
+    return True
 
-    def get_setting(key, default=None, view=None):
-        try:
-            if view == None:
-                view = sublime.active_window().active_view()
-            s = view.settings()
-            if s.has("sublimeclang_%s" % key):
-                return s.get("sublimeclang_%s" % key)
-        except:
-            pass
-        return get_settings().get(key, default)
+def status_message(msg):
+    # sublime.status_message(sdecode(msg))
+    print(sdecode(msg))
 
-    def display_user_selection(options, callback):
-        sublime.active_window().show_quick_panel(options, callback)
+def get_settings():
+    module_path = os.path.abspath(__file__)
+    root_dir = os.path.dirname(os.path.dirname(module_path))
+    return sublime.load_settings(os.path.join(root_dir, "SublimeClang.sublime-settings"))
 
+def get_setting(key, default=None, view=None):
+    try:
+        if view == None:
+            view = sublime.active_window().active_view()
+        s = view.settings()
+        if s.has("sublimeclang_%s" % key):
+            return s.get("sublimeclang_%s" % key)
+    except:
+        pass
+    return get_settings().get(key, default)
+
+def display_user_selection(options, callback):
+    sublime.active_window().show_quick_panel(options, callback)
+
+"""
 except:
     # Just used for unittesting
     def are_we_there_yet(f):
@@ -151,7 +153,7 @@ except:
 
     def display_user_selection(options, callback):
         callback(0)
-
+"""
 
 class LockedVariable:
     def __init__(self, var):
