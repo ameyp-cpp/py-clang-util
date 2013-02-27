@@ -65,7 +65,11 @@ def plugin_loaded():
         c()
     loaded_callbacks = []
 
-from .. import sublime
+try:
+    import sublime
+except ImportError:
+    from .. import sublime
+
 def are_we_there_yet(x):
     global loaded_callbacks
     if loaded:
@@ -208,6 +212,9 @@ class Worker(object):
 
 
 def complete_path(value):
+    fd = open("/home/amey/dump", 'w')
+    fd.write(str(value))
+    fd.close()
     path_init, path_last = os.path.split(value)
     if path_init[:2] == "-I" and (path_last == "**" or path_last == "*"):
         starting_path = path_init[2:]
