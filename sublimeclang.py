@@ -35,8 +35,8 @@ import sys
 try:
     import Queue
     from internals.clang import cindex
-#    from errormarkers import clear_error_marks, add_error_mark, show_error_marks, \
-#                             update_statusbar, erase_error_marks, clang_error_panel
+    #from errormarkers import clear_error_marks, add_error_mark, show_error_marks, \
+    #                         update_statusbar, erase_error_marks, clang_error_panel
     from internals.common import get_setting, get_settings, is_supported_language, \
                                  get_language,get_cpu_count, \
                                  status_message, sencode, are_we_there_yet, plugin_loaded
@@ -301,6 +301,9 @@ class SublimeClangAutoComplete():
                 kind == cindex.CursorKind.NOT_IMPLEMENTED
 
     def return_completions(self, comp, view, callback):
+        fd = open("/home/amey/dump", 'w')
+        fd.write(str(callback))
+        fd.close()
         callback(comp)
 
     def on_query_completions(self, view, prefix, locations, found_callback):
