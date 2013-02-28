@@ -301,9 +301,6 @@ class SublimeClangAutoComplete():
                 kind == cindex.CursorKind.NOT_IMPLEMENTED
 
     def return_completions(self, comp, view, callback):
-        fd = open("/home/amey/dump", 'w')
-        fd.write(str(callback))
-        fd.close()
         callback(comp)
 
     def on_query_completions(self, view, prefix, locations, found_callback):

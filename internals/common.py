@@ -212,9 +212,6 @@ class Worker(object):
 
 
 def complete_path(value):
-    fd = open("/home/amey/dump", 'w')
-    fd.write(str(value))
-    fd.close()
     path_init, path_last = os.path.split(value)
     if path_init[:2] == "-I" and (path_last == "**" or path_last == "*"):
         starting_path = path_init[2:]
