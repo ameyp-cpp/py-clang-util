@@ -300,10 +300,7 @@ class SublimeClangAutoComplete():
                 kind == cindex.CursorKind.FUNCTION_TEMPLATE or \
                 kind == cindex.CursorKind.NOT_IMPLEMENTED
 
-    def return_completions(self, comp, view, callback):
-        callback(comp)
-
-    def on_query_completions(self, view, prefix, locations, found_callback):
+    def on_query_completions(self, view, prefix, locations):
         print "Prefix = ", len(prefix), ", Locations = ", locations
         global clang_complete_enabled
         if not is_supported_language(view) or not clang_complete_enabled:
@@ -317,14 +314,14 @@ class SublimeClangAutoComplete():
                 # Probably a variable or function declaration
                 # There's no point in trying to complete
                 # a name that hasn't been typed yet...
-                return self.return_completions([], view, found_callback)
+                return []
 
         timing = ""
         tot = 0
         start = time.time()
         tu = get_translation_unit(view)
         if tu == None:
-            return self.return_completions([], view, found_callback)
+            return []
         ret = None
         tu.lock()
         try:
@@ -385,9 +382,9 @@ class SublimeClangAutoComplete():
             tu.unlock()
 
         if not ret is None:
-            return self.return_completions(ret, view, found_callback)
+            return ret
 
-        return self.return_completions([], view, found_callback)
+        return []
 
     def reparse(self, view):
         unsaved_files = []
