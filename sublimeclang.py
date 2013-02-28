@@ -399,8 +399,8 @@ class SublimeClangAutoComplete():
     def reparse_done(self, view):
         display_compilation_results(view)
 
-    def warmup_cache(self):
-        stat = warm_up_cache(self.view)
+    def warmup_cache(self, view):
+        stat = warm_up_cache(view)
         if stat == translationunitcache.TranslationUnitCache.STATUS_PARSING:
             status_message("Cache is already warming up")
         elif stat != translationunitcache.TranslationUnitCache.STATUS_NOT_IN_CACHE:
