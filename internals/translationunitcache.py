@@ -118,8 +118,8 @@ try:
     f.close()
     json = data["packages"][0]["platforms"]["*"][0]["version"]
     lib = _getVersion().decode(sys.getdefaultencoding())
-    print("Have SublimeClang package: %s" % json)
-    print("Have SublimeClang libcache: %s" % lib)
+    #print("Have SublimeClang package: %s" % json)
+    #print("Have SublimeClang libcache: %s" % lib)
     assert lib == json
 except:
     import traceback
