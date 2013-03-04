@@ -301,7 +301,7 @@ class SublimeClangAutoComplete():
                 kind == cindex.CursorKind.NOT_IMPLEMENTED
 
     def on_query_completions(self, view, prefix, locations):
-        print "Prefix =\"", prefix, "\", Locations =", locations, ", View =", view
+        print ("Prefix = \"" + prefix + "\", Locations = " + str(locations))
         global clang_complete_enabled
         if not is_supported_language(view) or not clang_complete_enabled:
             return []

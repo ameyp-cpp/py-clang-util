@@ -18,14 +18,11 @@ position = 1060
 prefix = ""
 view = View(filename, position, flags)
 
-def found_completions(completions):
-    print len(completions)
-
 scaa = sublimeclang.SublimeClangAutoComplete()
 print "Warming up cache."
 scaa.warmup_cache(view)
 print "Getting completions."
-scaa.on_query_completions(view, prefix, [position], found_completions)
+scaa.on_query_completions(view, prefix, [position])
 
 def found_definition(target):
     if target == None:
