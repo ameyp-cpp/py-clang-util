@@ -382,6 +382,7 @@ class SublimeClangAutoComplete():
             tu.unlock()
 
         if not ret is None:
+            print ret
             return ret
 
         return []
