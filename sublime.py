@@ -41,17 +41,12 @@ class Settings:
         return default
 
 class View:
-    def __init__(self, file_name, position, flags=[], is_dirty=False, content=""):
+    def __init__(self, file_name, position, flags=[], content=""):
         self._file = open(file_name, 'rU')
 
         self._sel = [Region(position, position)]
         self._settings = Settings({"sublimeclang_options": flags})
-        self._is_dirty = is_dirty
-
-        if self._is_dirty:
-            self._content = content
-        else:
-            self._content = ""
+        self._content = content
 
     def file_name(self):
         return self._file.name
@@ -121,7 +116,7 @@ class View:
         return "source.c++"
 
     def is_dirty(self):
-        return self._is_dirty
+        return (len(self._content) > 0)
 
     def is_scratch(self):
         return False
