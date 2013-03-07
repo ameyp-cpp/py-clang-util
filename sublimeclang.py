@@ -415,8 +415,7 @@ class SublimeClangAutoComplete():
                                                [self.recompile, 0])
         self.recompile_timer.start()
 
-    def recompile(self):
-        view = self.view
+    def recompile(self, view):
         unsaved_files = []
         if view.is_dirty() and get_setting("reparse_use_dirty_buffer", False, view):
             unsaved_files.append((sencode(view.file_name()),
@@ -424,7 +423,7 @@ class SublimeClangAutoComplete():
         if not translationunitcache.tuCache.reparse(view, sencode(view.file_name()), unsaved_files,
                         self.reparse_done):
 
-            # Already parsing so retry in a bit
+            print "Already parsing."
             self.restart_recompile_timer(1)
 
     def on_activated(self, view):
