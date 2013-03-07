@@ -1,6 +1,7 @@
 import sublimeclang
 from sublime import View
 
+import threading
 import socket
 
 completions = []
@@ -14,15 +15,21 @@ else:
     filename = "/home/aparulekar/Developer/GamePlay/gameplay-samples/sample00-mesh/src/MeshGame.cpp"
     folders = ["/home/aparulekar/Developer/GamePlay"]
 
-position = 1060
+position = 1342
 prefix = ""
 view = View(filename, position, flags)
+recompile_sem = threading.Semaphore(0)
+
+def recompile_done():
+    sublimeclang.display_compilation_results(view)
+    print "Getting completions."
+    scaa.on_query_completions(view, prefix, [position])
+    recompile_sem.release()
 
 scaa = sublimeclang.SublimeClangAutoComplete()
-print "Warming up cache."
-scaa.warmup_cache(view)
-print "Getting completions."
-scaa.on_query_completions(view, prefix, [position])
+print "Recompiling"
+scaa.recompile(view, recompile_done)
+recompile_sem.acquire(True)
 
 def found_definition(target):
     if target == None:
