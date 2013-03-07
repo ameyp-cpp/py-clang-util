@@ -41,16 +41,16 @@ class Settings:
         return default
 
 class View:
-    def __init__(self, file_name, position, flags=[], content=""):
-        if content == "":
-            fil = open(file_name, 'rU')
-            self._content = fil.read()
-            fil.close()
+    def __init__(self, file_name, position, flags=[], tmp_file=None):
+        if tmp_file == None:
             self._is_dirty = False
+            fil = open(file_name, 'rU')
         else:
-            self._content = content
             self._is_dirty = True
+            fil = open(tmp_file, 'rU')
 
+        self._content = fil.read()
+        fil.close()
         self._file_name = file_name
         self._sel = [Region(position, position)]
         self._settings = Settings({"sublimeclang_options": flags})
