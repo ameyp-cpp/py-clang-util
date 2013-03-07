@@ -387,15 +387,12 @@ class SublimeClangAutoComplete():
 
         return []
 
-    def reparse(self, view):
+    def reparse(self, view, callback):
         unsaved_files = []
         if view.is_dirty():
             unsaved_files.append((sencode(view.file_name()),
                           view.substr(Region(0, view.size()))))
-        translationunitcache.tuCache.reparse(view, sencode(view.file_name()), unsaved_files, self.reparse_done, (view,))
-
-    def reparse_done(self, view):
-        display_compilation_results(view)
+        translationunitcache.tuCache.reparse(view, sencode(view.file_name()), unsaved_files, callback, (view,))
 
     def warmup_cache(self, view):
         stat = warm_up_cache(view)
@@ -415,14 +412,13 @@ class SublimeClangAutoComplete():
                                                [self.recompile, 0])
         self.recompile_timer.start()
 
-    def recompile(self, view):
+    def recompile(self, view, callback):
         unsaved_files = []
         if view.is_dirty() and get_setting("reparse_use_dirty_buffer", False, view):
             unsaved_files.append((sencode(view.file_name()),
                                   view.substr(Region(0, view.size()))))
         if not translationunitcache.tuCache.reparse(view, sencode(view.file_name()), unsaved_files,
-                        self.reparse_done):
-
+                        callback):
             print "Already parsing."
             self.restart_recompile_timer(1)
 
