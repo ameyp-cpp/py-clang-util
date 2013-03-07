@@ -42,14 +42,16 @@ class Settings:
 
 class View:
     def __init__(self, file_name, position, flags=[], content=""):
-        self._file = open(file_name, 'rU')
+        if content == "":
+            self._file = open(file_name, 'rU')
 
+        self._file_name = file_name
         self._sel = [Region(position, position)]
         self._settings = Settings({"sublimeclang_options": flags})
         self._content = content
 
     def file_name(self):
-        return self._file.name
+        return self._file_name
 
     def line(self, position):
         content = ""
@@ -57,12 +59,11 @@ class View:
 
         if not self.is_dirty():
             self._file.seek(0)
-            content = self._file.read(position)
-            beg = content.rfind('\n') + 1
-            self._file.readline()
-            end = self._file.tell() - 1
+            content = self._file.read(position + 1)
+            beg = content.rfind('\n', 0, position) + 1
+            end = content.find('\n', beg)
         else:
-            content = self._content[:position].rfind('\n') + 1
+            beg = self._content[:position].rfind('\n') + 1
             end = self._content.find('\n', beg)
 
         return Region(beg, end)
