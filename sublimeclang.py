@@ -20,15 +20,8 @@ freely, subject to the following restrictions:
    3. This notice may not be removed or altered from any source
    distribution.
 """
-try:
-    import sublime
-    import ctypes
-except:
-    sublime.error_message("""\
-Unfortunately ctypes can't be imported, so SublimeClang will not work.
-
-There is a work around for this to get it to work, \
-please see http://www.github.com/quarnster/SublimeClang for more details. """)
+import sublime
+import ctypes
 import os
 import sys
 
@@ -187,7 +180,7 @@ def ignore_diagnostic(path, ignoreDirs):
             return True
     return False
 
-def display_compilation_results(view):
+def display_compilation_results(view, bridge):
     tu = get_translation_unit(view)
     errString = ""
     show = False
@@ -260,7 +253,7 @@ def display_compilation_results(view):
                                                  warningCount, "s" if warningCount != 1 else "")
         status_message(statusString)
 
-    # clang_error_panel.set_data(errString)
+    bridge(errString)
 
 member_regex = re.compile(r"(([a-zA-Z_]+[0-9_]*)|([\)\]])+)((\.)|(->))$")
 
