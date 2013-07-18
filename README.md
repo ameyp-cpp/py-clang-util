@@ -3,9 +3,9 @@
 This is a python module that can be used for a variety of C++-related utility functions, such as code completion with a cache and navigation.
 It's a direct port of the [SublimeClang plugin](https://github.com/quarnster/SublimeClang) for the Sublime Text 2 editor, and most of the credit goes to that plugin's author.
 
-## Limitations
+## Notes for windows
 
-I don't know if this works on Windows, and I'm not going to try to get it to work. I've had no luck compiling the 3.2 release of llvm+clang on Windows, and quite frankly I'm not going to bother. If you have any luck fixing the module to work perfectly on Windows, please send me a pull request.
+Needs MinGW-w64
 
 ## Features
 
@@ -20,13 +20,14 @@ Line and column numbers and cursor position all start at 0 for the purpose of cr
 ## Installation
 
 1. Get the repo with `git clone https://github.com/ameyp/py-clang-util.git --recursive`
-2. Only on linux,
-  1. cd src
-  2. mkdir build
-  3. cd build
-  4. cmake ..
-  5. make
-3. Add the repo's path to your PYTHONPATH.
+2. `cd src`
+3. `mkdir build`
+4. `cd build`
+5. `cmake ..`
+6. `make`
+7. Add the repo's path to your PYTHONPATH.
+
+Note that in step 5, the latest (trunk) versions of llvm and clang will be fetched and built if no clang installation is found on your system. If you wish to use version 3.2 of clang instead, run cmake with `cmake .. -DCLANG_VERSION=3.2`
 
 ## Usage
 ```python
