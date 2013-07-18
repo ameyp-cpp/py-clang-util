@@ -33,7 +33,7 @@ include_directories(
 )
 
 set(CLANG_VERSION "trunk" CACHE STRING "Clang version to use")
-set_property(CACHE CLANG_VERSION PROPERTY STRINGS trunk 3.2)
+set_property(CACHE CLANG_VERSION PROPERTY STRINGS trunk 3.3)
 set(LLVM_TARGETS_TO_BUILD "X86" CACHE STRING "LLVM targets to build")
 
 if(NOT DEFINED BUILD_LIBCLANG)
@@ -116,7 +116,7 @@ endif()
 set(COPY_TARGET "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libclang${LIBSUFFIX}${CMAKE_SHARED_LIBRARY_SUFFIX}")
 
 if(BUILD_LIBCLANG)
-    if($(CLANG_VERSION) MATCHES "3.2" AND NOT EXISTS ${PROJECT_BINARY_DIR}/llvm.tar.gz)
+    if(NOT $(CLANG_VERSION) MATCHES "trunk" AND NOT EXISTS ${PROJECT_BINARY_DIR}/llvm.tar.gz)
         message("Downloading llvm...")
         file(DOWNLOAD http://www.llvm.org/releases/${CLANG_VERSION}/llvm-${CLANG_VERSION}.src.tar.gz ${PROJECT_BINARY_DIR}/llvm.tar.gz)
     else()
@@ -124,7 +124,7 @@ if(BUILD_LIBCLANG)
 	execute_process(COMMAND svn co http://llvm.org/svn/llvm-project/llvm/trunk llvm WORKING_DIRECTORY ${PROJECT_BINARY_DIR})
     endif()
 
-    if($(CLANG_VERSION) MATCHES "3.2" AND NOT EXISTS ${PROJECT_BINARY_DIR}/clang.tar.gz)
+    if(NOT $(CLANG_VERSION) MATCHES "trunk" AND NOT EXISTS ${PROJECT_BINARY_DIR}/clang.tar.gz)
         message("Downloading clang...")
         file(DOWNLOAD http://www.llvm.org/releases/${CLANG_VERSION}/clang-${CLANG_VERSION}.src.tar.gz ${PROJECT_BINARY_DIR}/clang.tar.gz)
     else()
