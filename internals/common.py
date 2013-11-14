@@ -84,10 +84,7 @@ def run_in_main_thread(func, args=()):
 
 def error_message(msg):
     # Work around for http://www.sublimetext.com/forum/viewtopic.php?f=3&t=9825
-    if sublime.active_window() == None:
-        sublime.set_timeout(lambda: error_message(msg), 500)
-    else:
-        sublime.error_message(msg)
+    sublime.error_message(msg)
 
 language_regex = re.compile("(?<=source\.)[\w+#]+")
 

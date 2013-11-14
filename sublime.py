@@ -117,3 +117,6 @@ def load_settings(settings_file):
         match = comment_re.search(content)
 
     return Settings(json.loads(content))
+
+def error_message(msg):
+    print msg
